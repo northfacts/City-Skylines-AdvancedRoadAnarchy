@@ -77,7 +77,10 @@
     <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="png\AnarchyIcons2.png" />
+    <EmbeddedResource Include="png\OnOff.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="png\AnarchyIcons.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

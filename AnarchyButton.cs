@@ -12,7 +12,7 @@ namespace AdvancedRoadAnarchy
         public float panelposY = 200f;
 
         public static bool draggable { get; set; }
-        private static UITextureAtlas myatlas = null;
+        public static UITextureAtlas ButtonAtlas = null;
 
         public override bool canFocus
         {
@@ -34,16 +34,21 @@ namespace AdvancedRoadAnarchy
             this.disabledFgSprite = null;
             this.focusedBgSprite = "AnarchyNormalBg";
             this.focusedFgSprite = null;
-            this.atlas = CreateAtlas(size, size, "AnarchyIcons2.png", new[]
-                                        {
-                                            "AnarchyNormalBg",
-                                            "AnarchyHoveredBg",
-                                            "AnarchyPressedBg",
-                                            "AnarchyNormalFg",
-                                            "AnarchyHoveredFg",
-                                            "AnarchyPressedFg",
-                                            "AnarchyUnlockBg",
-                                        });
+            if (ButtonAtlas == null)
+            {
+                this.atlas = CreateAtlas("AdvancedRoadAnarchy", size, size, "AnarchyIcons.png", new[]
+                                            {
+                                                "AnarchyNormalBg",
+                                                "AnarchyHoveredBg",
+                                                "AnarchyPressedBg",
+                                                "AnarchyNormalFg",
+                                                "AnarchyHoveredFg",
+                                                "AnarchyPressedFg",
+                                                "AnarchyUnlockBg",
+                                                "AnarchyNeonLogo",
+                                            });
+            }
+            ButtonAtlas = this.atlas;
             this.size = new Vector2(size, size);
             GameObject obj = new GameObject("AdvancedRoadAnarchyOption");
             obj.transform.parent = this.transform.parent;
@@ -79,7 +84,7 @@ namespace AdvancedRoadAnarchy
 
         public void UpdateButton()
         {
-            //this.playAudioEvents = optionbox.isVisible ? false : true;
+            this.playAudioEvents = optionbox.isVisible ? false : true;
             if (draggable)
             {
                 this.normalFgSprite = null;
@@ -111,7 +116,7 @@ namespace AdvancedRoadAnarchy
 
         public override void Update()
         {
-            if (this.containsMouse && Input.GetMouseButtonDown(0) && !draggable && !optionbox.isVisible)
+            if (((this.containsMouse && Input.GetMouseButtonDown(0)) || Input.GetKeyDown(KeyCode.L)) && !draggable && !optionbox.isVisible)
             {
                 tools.UpdateHook();
             }
@@ -119,67 +124,46 @@ namespace AdvancedRoadAnarchy
             {
                 optionbox.Show();
             }
-            else if (Input.GetKeyDown(KeyCode.L) && !draggable && !optionbox.isVisible)
-            {
-                tools.UpdateHook();
-            }
-            else if (optionbox.isVisible)
-            {
-                if (optionbox.UnlockButton.containsMouse && (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1) || Input.GetMouseButtonDown(2)))
-                {
-                    draggable = !draggable;
-                    optionbox.CreateUnlockButton();
-                }
-            }
             UpdateButton();
         }
 
-        private UITextureAtlas CreateAtlas(int width, int height, string file, string[] spriteNames)
+        public static UITextureAtlas CreateAtlas(string name, int width, int height, string file, string[] spriteNames)
         {
-            if (myatlas == null)
+            var tex = new Texture2D(width, height, TextureFormat.ARGB32, false)
             {
-                var tex = new Texture2D(width, height, TextureFormat.ARGB32, false)
+                filterMode = FilterMode.Bilinear,
+            };
+
+            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            using (var textureStream = assembly.GetManifestResourceStream("AdvancedRoadAnarchy.png." + file))
+            {
+                var buf = new byte[textureStream.Length];
+                textureStream.Read(buf, 0, buf.Length);
+                tex.LoadImage(buf);
+                tex.Apply(true, false);
+            }
+
+            var atlas = ScriptableObject.CreateInstance<UITextureAtlas>();
+            var material = Object.Instantiate(UIView.Find<UITabstrip>("ToolMode").atlas.material);
+            material.mainTexture = tex;
+
+            atlas.material = material;
+            atlas.name = name;
+
+            for (var i = 0; i < spriteNames.Length; ++i)
+            {
+                var uw = 1.0f / spriteNames.Length;
+
+                var sprite = new UITextureAtlas.SpriteInfo
                 {
-                    filterMode = FilterMode.Bilinear,
+                    name = spriteNames[i],
+                    texture = tex,
+                    region = new Rect(i * uw, 0, uw, 1),
                 };
 
-                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                using (var textureStream = assembly.GetManifestResourceStream("AdvancedRoadAnarchy.png." + file))
-                {
-                    var buf = new byte[textureStream.Length];
-                    textureStream.Read(buf, 0, buf.Length);
-                    tex.LoadImage(buf);
-                    tex.Apply(true, false);
-                }
-
-                var atlas = ScriptableObject.CreateInstance<UITextureAtlas>();
-                var material = Object.Instantiate(UIView.Find<UITabstrip>("ToolMode").atlas.material);
-                material.mainTexture = tex;
-                
-
-                atlas.material = material;
-                atlas.name = "AdvancedRoadAnarchy";
-
-                for (var i = 0; i < spriteNames.Length; ++i)
-                {
-                    var uw = 1.0f / spriteNames.Length;
-
-                    var sprite = new UITextureAtlas.SpriteInfo
-                   {
-                        name = spriteNames[i],
-                        texture = tex,
-                        region = new Rect(i * uw, 0, uw, 1),
-                    };
-
-                    
-                    atlas.AddSprite(sprite);
-                    myatlas = atlas;
-                }
+                atlas.AddSprite(sprite);
             }
-            
-            return myatlas;
+            return atlas;
         }
-
-
     }
 }

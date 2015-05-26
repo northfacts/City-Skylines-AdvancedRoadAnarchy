@@ -5,20 +5,22 @@ namespace AdvancedRoadAnarchy
 {
     public class AnarchyOptionBox : UIPanel
     {
-        private static readonly float OptionBoxWidth = 215f;
+        //private static readonly float OptionBoxWidth = 215f;
         private static readonly float OptionBoxTitleHeight = 50f;
 
-        public UIButton UnlockButton;
-        public AnarchyCheckbox StartOnLoad;
-        public UILabel title;
+        //public UIButton UnlockButton;
+        private AnarchyCheckbox UnlockButton = null;
+        private AnarchyCheckbox StartOnLoad = null;
+        private UILabel title;
+        private UIButton logo;
+        private UIButton close;
 
         private AnarchyCheckbox checkbox = new AnarchyCheckbox();
         
         public void CreateOptionBox(float x, float y)
         {
             this.absolutePosition = new Vector3(x, y);
-            this.width = OptionBoxWidth;
-            this.height = OptionBoxTitleHeight + 55f;
+            this.size = new Vector2(255f,135f);
             this.backgroundSprite = "MenuPanel";
             var titleObject = new GameObject("Title");
             titleObject.transform.parent = this.transform;
@@ -26,9 +28,9 @@ namespace AdvancedRoadAnarchy
             this.title = titleObject.AddComponent<UILabel>();
             this.title.width = this.width;
             this.title.height = OptionBoxTitleHeight;
-            this.title.text = "Advanced Road Anarchy\nOption";
+            this.title.text = "Options";
             this.title.textAlignment = UIHorizontalAlignment.Center;
-            this.title.position = new Vector3((this.width / 2f) - (title.width / 2f), -20f + (title.height / 2f));
+            this.title.relativePosition = new Vector3((this.width / 2f) - (this.title.width / 2f), (OptionBoxTitleHeight / 2f) - (this.title.height / 2f));
             UIDragHandle uIDragHandle = new GameObject("TitleDrag")
             {
                 transform =
@@ -39,31 +41,29 @@ namespace AdvancedRoadAnarchy
             }.AddComponent<UIDragHandle>();
             uIDragHandle.width = this.width;
             uIDragHandle.height = OptionBoxTitleHeight;
-            CreateUnlockButton();
-            CreateCheckbox("StartOnLoad", StartOnLoad, "Startup on loading", 78f, true);
-        }
-
-        public void CreateUnlockButton()
-        {
-            if (this.UnlockButton != null)
+            var logoObject = new GameObject("logo");
+            logoObject.transform.parent = this.transform;
+            logoObject.transform.localPosition = Vector3.zero;
+            this.logo = logoObject.AddComponent<UIButton>();
+            this.logo.size = new Vector2(OptionBoxTitleHeight -10f, OptionBoxTitleHeight -10f);
+            this.logo.relativePosition = new Vector3(2f, 2f);
+            this.logo.atlas = AnarchyButton.ButtonAtlas;
+            this.logo.normalBgSprite = "AnarchyNeonLogo";
+            var closeObject = new GameObject("close");
+            closeObject.transform.parent = this.transform;
+            closeObject.transform.localPosition = Vector3.zero;
+            this.close = closeObject.AddComponent<UIButton>();
+            this.close.size = new Vector2(30f, 30f);
+            this.close.relativePosition = new Vector3(this.width - 2f - this.close.width, 2f);
+            this.close.normalBgSprite = "buttonclose";
+            this.close.hoveredBgSprite = "buttonclosehover";
+            this.close.pressedBgSprite = "buttonclosepressed";
+            this.close.eventClick += (Component, param) =>
             {
-                GameObject.Destroy(this.UnlockButton.gameObject);
-            }
-            var unlockObject = new GameObject("unlock");
-            unlockObject.transform.parent = this.transform;
-            unlockObject.transform.position = Vector3.zero;
-            this.UnlockButton = unlockObject.AddComponent<UIButton>();
-            this.UnlockButton.relativePosition = new Vector3(15f, (OptionBoxTitleHeight + 1f));
-            this.UnlockButton.normalBgSprite = "ButtonMenu";
-            this.UnlockButton.hoveredBgSprite = "ButtonMenuHovered";
-            this.UnlockButton.pressedBgSprite = "ButtonMenuPressed";
-            this.UnlockButton.width = this.width - 30f;
-            this.UnlockButton.height = 20f;
-            this.UnlockButton.playAudioEvents = true;
-            this.UnlockButton.text = AnarchyButton.draggable ? "Button unlocked" : "Button Locked";
-            this.UnlockButton.textColor = AnarchyButton.draggable ? new Color32(0, 255, 0, 255) : new Color32(255, 0, 0, 255);
-            this.UnlockButton.hoveredTextColor = AnarchyButton.draggable ? new Color32(0, 255, 0, 255) : new Color32(255, 0, 0, 255);
-            this.UnlockButton.pressedTextColor = AnarchyButton.draggable ? new Color32(0, 255, 0, 255) : new Color32(255, 0, 0, 255);
+                this.Hide();
+            };
+            CreateCheckbox("UnlockButton", UnlockButton, "Draggable button", 55f, false);
+            CreateCheckbox("StartOnLoad", StartOnLoad, "Enable by default", 92f, true);
         }
 
         private void CreateCheckbox(string name, AnarchyCheckbox button, string label, float posy, bool check)
@@ -78,8 +78,8 @@ namespace AdvancedRoadAnarchy
             o.transform.parent = this.transform;
             o.transform.position = Vector3.zero;
             button = o.AddComponent<AnarchyCheckbox>();
-            button.size = new Vector2(15f, 15f);
-            button.relativePosition = new Vector3(this.width - 20f - button.width, posy);
+            button.size = new Vector2(54f, 30f);
+            button.relativePosition = new Vector3(this.width - 20f - button.width, posy - 6f);
             buttonlabel.relativePosition = new Vector3((20f), posy);
             button.IsChecked = check;
             button.eventClick += (component, param) =>
@@ -99,6 +99,9 @@ namespace AdvancedRoadAnarchy
                     else
                         Debug.Log("désactiver");
                     break;
+                case "UnlockButton":
+                    AnarchyButton.draggable = !AnarchyButton.draggable;
+                    break;
             }
         }
 
@@ -107,31 +110,28 @@ namespace AdvancedRoadAnarchy
     public class AnarchyCheckbox : UISprite
     {
         public bool IsChecked { get; set; }
+        private static UITextureAtlas OnOffAtlas = null;
 
         public override void Awake()
         {
             base.Awake();
+            if (OnOffAtlas == null)
+            {
+                this.atlas = AnarchyButton.CreateAtlas("OnOffAtlas", 316, 82, "OnOff.png", new[]
+                                            {
+                                                "AnarchyOn",
+                                                "AnarchyOff",
+                                            });
+            }
             IsChecked = false;
-            spriteName = "AchievementCheckedFalse";
+            spriteName = "AnarchyOff";
             playAudioEvents = true;
         }
 
         public override void Update()
         {
             base.Update();
-            spriteName = IsChecked ? "AchievementCheckedTrue" : "AchievementCheckedFalse";
+            spriteName = IsChecked ? "AnarchyOn" : "AnarchyOff";
         }
     }
-
- /*   public class AnarchyOnOff : UISprite
-    {
-        public bool IsChecked { get; set; }
-
-        public override void Awake()
-        {
-            base.Awake();
-            IsChecked = false;
-            spriteName = ""
-        }
-    }*/
 }
