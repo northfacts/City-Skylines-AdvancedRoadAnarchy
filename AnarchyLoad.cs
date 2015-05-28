@@ -7,7 +7,10 @@ namespace AdvancedRoadAnarchy
     public class AnarchyLoad : LoadingExtensionBase
     {
         UIComponent uiComponent;
-                
+        
+
+
+
         public override void OnLevelLoaded(LoadMode mode)
         {
             UIView v = UIView.GetAView();

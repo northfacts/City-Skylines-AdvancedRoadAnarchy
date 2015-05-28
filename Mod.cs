@@ -1,6 +1,4 @@
-﻿
-using ICities;
-
+﻿using ICities;
 
 namespace AdvancedRoadAnarchy
 {

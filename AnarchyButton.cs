@@ -36,7 +36,7 @@ namespace AdvancedRoadAnarchy
             this.focusedFgSprite = null;
             if (ButtonAtlas == null)
             {
-                this.atlas = CreateAtlas("AdvancedRoadAnarchy", size, size, "AnarchyIcons.png", new[]
+                ButtonAtlas = CreateAtlas("AdvancedRoadAnarchy", size, size, "AnarchyIcons.png", new[]
                                             {
                                                 "AnarchyNormalBg",
                                                 "AnarchyHoveredBg",
@@ -48,7 +48,7 @@ namespace AdvancedRoadAnarchy
                                                 "AnarchyNeonLogo",
                                             });
             }
-            ButtonAtlas = this.atlas;
+            this.atlas = ButtonAtlas;
             this.size = new Vector2(size, size);
             GameObject obj = new GameObject("AdvancedRoadAnarchyOption");
             obj.transform.parent = this.transform.parent;
