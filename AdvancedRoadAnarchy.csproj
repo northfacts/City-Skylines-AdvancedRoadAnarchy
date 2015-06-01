@@ -64,10 +64,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AnarchyButton.cs" />
-    <Compile Include="AnarchyLoad.cs" />
-    <Compile Include="AnarchyTools.cs" />
-    <Compile Include="OptionBox.cs" />
+    <Compile Include="AdvancedRoadAnarchyButton.cs" />
+    <Compile Include="AdvancedRoadAnarchyLoad.cs" />
+    <Compile Include="AdvancedRoadAnarchyTools.cs" />
+    <Compile Include="AdvancedRoadAnarchyInfoText.cs" />
+    <Compile Include="AdvancedRoadOptionBox.cs" />
+    <Compile Include="AdvancedRoadAnarchySettings.cs" />
+    <Compile Include="AdvancedRoadAnarchySerializer.cs" />
     <Compile Include="Detours.cs" />
     <Compile Include="Mod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

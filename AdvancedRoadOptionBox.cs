@@ -1,26 +1,30 @@
 ﻿using ColossalFramework.UI;
 using UnityEngine;
+using ColossalFramework.IO;
 
 namespace AdvancedRoadAnarchy
 {
-    public class AnarchyOptionBox : UIPanel
+    public class AdvancedRoadAnarchyOptionBox : UIPanel
     {
-        //private static readonly float OptionBoxWidth = 215f;
         static readonly string ARA = "AdvancedRoadAnarchy";
         private static readonly float OptionBoxTitleHeight = 50f;
+        public float panelposX = 300f;
+        public float panelposY = 200f;
 
-        private AnarchyCheckbox UnlockButton = null;
-        private AnarchyCheckbox StartOnLoad = null;
-        private AnarchyCheckbox InfoText = null;
         private UILabel title;
         private UIButton logo;
         private UIButton close;
 
-        private AnarchyCheckbox checkbox = new AnarchyCheckbox();
-
-        public void CreateOptionBox(float x, float y)
+        private AdvancedRoadAnarchyCheckbox checkbox = new AdvancedRoadAnarchyCheckbox();
+        AdvancedRoadAnarchyTools tools = new AdvancedRoadAnarchyTools();
+        AdvancedRoadAnarchyInfoText infotext = new AdvancedRoadAnarchyInfoText();
+ 
+        public override void Awake()
         {
-            this.absolutePosition = new Vector3(x, y);
+            base.Awake();
+            this.transform.parent = AdvancedRoadAnarchyLoad.uiParent.transform;
+            
+            
             this.size = new Vector2(275f,172f);
             this.backgroundSprite = "MenuPanel";
             var titleObject = new GameObject(ARA + "Title");
@@ -48,8 +52,8 @@ namespace AdvancedRoadAnarchy
             this.logo = logoObject.AddComponent<UIButton>();
             this.logo.size = new Vector2(OptionBoxTitleHeight -10f, OptionBoxTitleHeight -10f);
             this.logo.relativePosition = new Vector3(2f, 2f);
-            this.logo.atlas = AnarchyButton.ButtonAtlas;
-            this.logo.normalBgSprite = "AnarchyNeonLogo";
+            this.logo.atlas = AdvancedRoadAnarchyButton.ButtonAtlas;
+            this.logo.normalBgSprite = "AnarchyLogo";
             var closeObject = new GameObject(ARA + "close");
             closeObject.transform.parent = this.transform;
             closeObject.transform.localPosition = Vector3.zero;
@@ -59,18 +63,20 @@ namespace AdvancedRoadAnarchy
             this.close.normalBgSprite = "buttonclose";
             this.close.hoveredBgSprite = "buttonclosehover";
             this.close.pressedBgSprite = "buttonclosepressed";
-            this.close.eventClick += (Component, param) =>
+            this.close.eventClick += (component, param) =>
             {
-                this.Hide();
+                OptionBoxAction("close");
             };
-            CreateCheckbox("UnlockButton", UnlockButton, "Draggable", 55f, false);
-            CreateCheckbox("StartOnLoad", StartOnLoad, "Enable mod by default", 92f, true);
-            CreateCheckbox("InfoText", InfoText, "Enable info text", 129, true);
+            CreateCheckbox("UnlockButton", "Draggable", 55f, false);
+            CreateCheckbox("StartOnLoad", "Enable mod by default", 92f, AdvancedRoadAnarchy.Settings.EnableByDefault);
+            CreateCheckbox("InfoText", "Enable info text", 129, AdvancedRoadAnarchy.Settings.EnableInfoText);
+            var resolutionData = AdvancedRoadAnarchy.Settings.GetResolutionData(Screen.currentResolution.width, Screen.currentResolution.height);
+            this.absolutePosition = new Vector3(0f, (resolutionData.ScreenHeight / 2) - (this.height / 2));
         }
 
-        private void CreateCheckbox(string name, AnarchyCheckbox button, string label, float posy, bool check)
+        private void CreateCheckbox(string name, string label, float posy, bool check)
         {
-            var l = new GameObject(ARA + name);
+            var l = new GameObject(ARA + name + "label");
             l.transform.parent = this.transform;
             l.transform.position = Vector3.zero;
             var buttonlabel = l.AddComponent<UILabel>();
@@ -79,7 +85,7 @@ namespace AdvancedRoadAnarchy
             var o = new GameObject(ARA + name);
             o.transform.parent = this.transform;
             o.transform.position = Vector3.zero;
-            button = o.AddComponent<AnarchyCheckbox>();
+            var button = o.AddComponent<AdvancedRoadAnarchyCheckbox>();
             button.size = new Vector2(54f, 30f);
             button.relativePosition = new Vector3(this.width - 20f - button.width, posy - 6f);
             buttonlabel.relativePosition = new Vector3((20f), posy);
@@ -87,32 +93,35 @@ namespace AdvancedRoadAnarchy
             button.eventClick += (component, param) =>
             {
                 button.IsChecked = !button.IsChecked;
-                CheckboxAction(name,button.IsChecked);
+                OptionBoxAction(name);
             };
         }
 
-        public void CheckboxAction(string action,bool check)
+
+        public void OptionBoxAction(string action)
         {
             switch (action)
             {
                 case "StartOnLoad":
-                    if (check)
-                        Debug.Log("activer");
-                    else
-                        Debug.Log("désactiver");
+                    AdvancedRoadAnarchy.Settings.EnableByDefault = !AdvancedRoadAnarchy.Settings.EnableByDefault;
                     break;
                 case "UnlockButton":
-                    AnarchyButton.draggable = !AnarchyButton.draggable;
+                    AdvancedRoadAnarchyButton.draggable = !AdvancedRoadAnarchyButton.draggable;
                     break;
                 case "InfoText":
-                    Debug.Log("infotext");
+                    AdvancedRoadAnarchy.Settings.EnableInfoText = !AdvancedRoadAnarchy.Settings.EnableInfoText;
+                    break;
+                case "close":
+                    AdvancedRoadAnarchyButton.draggable = false;
+                    UIView.Find<AdvancedRoadAnarchyCheckbox>(ARA + "UnlockButton").IsChecked = false;
+                    this.Hide();
                     break;
             }
         }
 
     }
 
-    public class AnarchyCheckbox : UISprite
+    public class AdvancedRoadAnarchyCheckbox : UISprite
     {
         public bool IsChecked { get; set; }
         private static UITextureAtlas OnOffAtlas = null;
@@ -122,7 +131,7 @@ namespace AdvancedRoadAnarchy
             base.Awake();
             if (OnOffAtlas == null)
             {
-                OnOffAtlas = AnarchyButton.CreateAtlas("OnOffAtlas", 316, 82, "OnOff.png", new[]
+                OnOffAtlas = AdvancedRoadAnarchyButton.CreateAtlas("OnOffAtlas", 316, 82, "OnOff.png", new[]
                                             {
                                                 "AnarchyOn",
                                                 "AnarchyOff",

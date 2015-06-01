@@ -3,16 +3,15 @@ using UnityEngine;
 
 namespace AdvancedRoadAnarchy
 {
-    public class AnarchyButton : UIButton
+    public class AdvancedRoadAnarchyButton : UIButton
     {
-        AnarchyTools tools = new AnarchyTools();
-        //AnarchySettings settings = new AnarchySettings();
-        private static AnarchyOptionBox optionbox = null;
-        public float panelposX = 300f;
-        public float panelposY = 200f;
+        AdvancedRoadAnarchyTools tools = new AdvancedRoadAnarchyTools();
+        UIComponent infotext = null;
+        UIComponent optionbox = null;
 
         public static bool draggable { get; set; }
         public static UITextureAtlas ButtonAtlas = null;
+        static readonly string ARA = "AdvancedRoadAnarchy";
 
         public override bool canFocus
         {
@@ -27,16 +26,16 @@ namespace AdvancedRoadAnarchy
             base.Start();
             draggable = false;
             const int size = 43;
-
             this.playAudioEvents = true;
-            this.absolutePosition = new Vector3(200f, 100f);//AnarchySettings.Instance.ToggleButtonPositionX, AnarchySettings.Instance.ToggleButtonPositionY);
+            var resolutionData = AdvancedRoadAnarchy.Settings.GetResolutionData(Screen.currentResolution.width, Screen.currentResolution.height);
+            this.absolutePosition = new Vector3(resolutionData.ButtonPositionX, resolutionData.ButtonPositionY);
             this.disabledBgSprite = null;
             this.disabledFgSprite = null;
             this.focusedBgSprite = "AnarchyNormalBg";
             this.focusedFgSprite = null;
             if (ButtonAtlas == null)
             {
-                ButtonAtlas = CreateAtlas("AdvancedRoadAnarchy", size, size, "AnarchyIcons.png", new[]
+                ButtonAtlas = CreateAtlas(ARA, size, size, "AnarchyIcons.png", new[]
                                             {
                                                 "AnarchyNormalBg",
                                                 "AnarchyHoveredBg",
@@ -45,16 +44,13 @@ namespace AdvancedRoadAnarchy
                                                 "AnarchyHoveredFg",
                                                 "AnarchyPressedFg",
                                                 "AnarchyUnlockBg",
-                                                "AnarchyNeonLogo",
+                                                "AnarchyLogo",
+                                                "AnarchyInfoTextBg",
                                             });
             }
             this.atlas = ButtonAtlas;
             this.size = new Vector2(size, size);
-            GameObject obj = new GameObject("AdvancedRoadAnarchyOption");
-            obj.transform.parent = this.transform.parent;
-            optionbox = obj.AddComponent<AnarchyOptionBox>();
-            optionbox.CreateOptionBox(panelposX, panelposY);
-            optionbox.Hide();
+            tools.AnarchyHook = AdvancedRoadAnarchy.Settings.EnableByDefault;
             UpdateButton();
         }
 
@@ -78,13 +74,16 @@ namespace AdvancedRoadAnarchy
                 this.position = new Vector3(this.position.x + p.moveDelta.x,
                 this.position.y + p.moveDelta.y,
                 this.position.z);
+                var resolutionData = AdvancedRoadAnarchy.Settings.GetResolutionData(Screen.currentResolution.width, Screen.currentResolution.height);
+                resolutionData.ButtonPositionX = this.absolutePosition.x;
+                resolutionData.ButtonPositionY = this.absolutePosition.y;
             }
             base.OnMouseMove(p);
         }
 
         public void UpdateButton()
         {
-            this.playAudioEvents = optionbox.isVisible ? false : true;
+            this.playAudioEvents = draggable ? false : true;
             if (draggable)
             {
                 this.normalFgSprite = null;
@@ -112,20 +111,46 @@ namespace AdvancedRoadAnarchy
                 this.pressedFgSprite = "AnarchyPressedFg";
                 this.pressedBgSprite = "AnarchyPressedBg";
             }
+
         }
 
         public override void Update()
         {
-            if (((this.containsMouse && Input.GetMouseButtonDown(0)) || Input.GetKeyDown(KeyCode.L)) && !draggable && !optionbox.isVisible)
+            if (((this.containsMouse && Input.GetMouseButtonDown(0)) || (Input.GetKeyDown(KeyCode.L) && (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt)))) && !draggable)
             {
                 tools.UpdateHook();
             }
             else if ((Input.GetMouseButtonDown(1) || Input.GetMouseButtonDown(2)) && this.containsMouse)
             {
-                optionbox.Show();
+                if (optionbox != null)
+                {
+                    optionbox.isVisible = !optionbox.isVisible;
+                    if (!optionbox.isVisible)
+                    {
+                        draggable = false;
+                        UIView.Find<AdvancedRoadAnarchyCheckbox>(ARA + "UnlockButton").IsChecked = false;
+                    }
+                }
+                else
+                {
+                    UIView option = UIView.GetAView();
+                    optionbox = option.AddUIComponent(typeof(AdvancedRoadAnarchyOptionBox));
+                }
             }
+            if (AdvancedRoadAnarchy.Settings.EnableInfoText && (draggable || tools.AnarchyHook))
+            {
+                if (infotext != null)
+                    infotext.Show();
+                else
+                {
+                    UIView info = UIView.GetAView();
+                    infotext = info.AddUIComponent(typeof(AdvancedRoadAnarchyInfoText));
+                }
+            }
+            else if (infotext != null)
+                infotext.Hide();
             UpdateButton();
-        }
+         }
 
         public static UITextureAtlas CreateAtlas(string name, int width, int height, string file, string[] spriteNames)
         {
@@ -135,7 +160,7 @@ namespace AdvancedRoadAnarchy
             };
 
             var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-            using (var textureStream = assembly.GetManifestResourceStream("AdvancedRoadAnarchy.png." + file))
+            using (var textureStream = assembly.GetManifestResourceStream(ARA + ".png." + file))
             {
                 var buf = new byte[textureStream.Length];
                 textureStream.Read(buf, 0, buf.Length);
@@ -164,6 +189,16 @@ namespace AdvancedRoadAnarchy
                 atlas.AddSprite(sprite);
             }
             return atlas;
+        }
+
+        public override void OnDestroy()
+        {
+            base.OnDestroy();
+
+            if (optionbox != null)
+                GameObject.Destroy(optionbox.gameObject);
+            if (infotext != null)
+                GameObject.Destroy(infotext.gameObject);
         }
     }
 }

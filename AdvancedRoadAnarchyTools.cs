@@ -5,12 +5,10 @@ using System.Linq;
 
 namespace AdvancedRoadAnarchy
 {
-    public class AnarchyTools
+    public class AdvancedRoadAnarchyTools
     {
         public bool AnarchyHook = false;
 
-        //AnarchySettings settings = new AnarchySettings();
- 
         private Dictionary<MethodInfo, RedirectCallsState> redirects = new Dictionary<MethodInfo, RedirectCallsState>();
 
         public void UpdateHook()
@@ -24,38 +22,38 @@ namespace AdvancedRoadAnarchy
         {
             var allFlags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
             var method = typeof(NetTool).GetMethods(allFlags).Single(c => c.Name == "CanCreateSegment" && c.GetParameters().Length == 11);
-            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AnarchyTools).GetMethod("CanCreateSegment", allFlags)));
+            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AdvancedRoadAnarchyTools).GetMethod("CanCreateSegment", allFlags)));
 
             method = typeof(NetTool).GetMethod("CheckNodeHeights", allFlags);
-            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AnarchyTools).GetMethod("CheckNodeHeights", allFlags)));
+            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AdvancedRoadAnarchyTools).GetMethod("CheckNodeHeights", allFlags)));
 
             method = typeof(NetTool).GetMethod("CheckCollidingSegments", allFlags);
-            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AnarchyTools).GetMethod("CheckCollidingSegments", allFlags)));
+            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AdvancedRoadAnarchyTools).GetMethod("CheckCollidingSegments", allFlags)));
 
             method = typeof(BuildingTool).GetMethod("CheckCollidingBuildings", allFlags);
-            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AnarchyTools).GetMethod("CheckCollidingBuildings", allFlags)));
+            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AdvancedRoadAnarchyTools).GetMethod("CheckCollidingBuildings", allFlags)));
 
             method = typeof(BuildingTool).GetMethod("CheckSpace", allFlags);
-            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AnarchyTools).GetMethod("CheckSpace", allFlags)));
+            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AdvancedRoadAnarchyTools).GetMethod("CheckSpace", allFlags)));
 
             method = typeof(Building).GetMethods(allFlags).Single(c => c.Name == "CheckZoning" && c.GetParameters().Length == 1);
-            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AnarchyTools).GetMethod("CheckZoning", allFlags)));
+            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AdvancedRoadAnarchyTools).GetMethod("CheckZoning", allFlags)));
 
             method = typeof(NetTool).GetMethod("GetElevation", allFlags);
-            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AnarchyTools).GetMethod("GetElevation", allFlags)));
+            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AdvancedRoadAnarchyTools).GetMethod("GetElevation", allFlags)));
 
 
             method = typeof(RoadAI).GetMethod("GetElevationLimits", allFlags);
-            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AnarchyTools).GetMethod("GetElevationLimits", allFlags)));
+            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AdvancedRoadAnarchyTools).GetMethod("GetElevationLimits", allFlags)));
 
             method = typeof(TrainTrackAI).GetMethod("GetElevationLimits", allFlags);
-            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AnarchyTools).GetMethod("GetElevationLimits", allFlags)));
+            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AdvancedRoadAnarchyTools).GetMethod("GetElevationLimits", allFlags)));
 
             method = typeof(PedestrianPathAI).GetMethod("GetElevationLimits", allFlags);
-            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AnarchyTools).GetMethod("GetElevationLimits", allFlags)));
+            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AdvancedRoadAnarchyTools).GetMethod("GetElevationLimits", allFlags)));
 
             method = typeof(NetAI).GetMethod("BuildUnderground", allFlags);
-            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AnarchyTools).GetMethod("BuildUnderground", allFlags)));
+            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AdvancedRoadAnarchyTools).GetMethod("BuildUnderground", allFlags)));
         }
 
         public void DisableHook()

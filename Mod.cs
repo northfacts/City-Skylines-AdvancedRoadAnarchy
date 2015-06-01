@@ -4,6 +4,8 @@ namespace AdvancedRoadAnarchy
 {
     public class AdvancedRoadAnarchy : IUserMod
     {
+        public static AdvancedRoadAnarchySettings Settings = new AdvancedRoadAnarchySettings();
+        
         public string Name
         {
             get { return "Advanced Road Anarchy"; }
