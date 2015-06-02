@@ -31,7 +31,7 @@ namespace AdvancedRoadAnarchy
             this.absolutePosition = new Vector3(resolutionData.ButtonPositionX, resolutionData.ButtonPositionY);
             this.disabledBgSprite = null;
             this.disabledFgSprite = null;
-            this.focusedBgSprite = "AnarchyNormalBg";
+            
             this.focusedFgSprite = null;
             if (ButtonAtlas == null)
             {
@@ -50,6 +50,8 @@ namespace AdvancedRoadAnarchy
             }
             this.atlas = ButtonAtlas;
             this.size = new Vector2(size, size);
+            this.focusedBgSprite = "AnarchyNormalBg";
+            this.normalBgSprite = "ButtonMenu";
             tools.AnarchyHook = AdvancedRoadAnarchy.Settings.EnableByDefault;
             UpdateButton();
         }
@@ -150,7 +152,7 @@ namespace AdvancedRoadAnarchy
             else if (infotext != null)
                 infotext.Hide();
             UpdateButton();
-         }
+        }
 
         public static UITextureAtlas CreateAtlas(string name, int width, int height, string file, string[] spriteNames)
         {

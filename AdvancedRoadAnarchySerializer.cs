@@ -1,8 +1,5 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Xml.Serialization;
-using UnityEngine;
-using System.Collections.Generic;
 using ColossalFramework.IO;
 
 
@@ -12,10 +9,13 @@ namespace AdvancedRoadAnarchy
     {
         public static string PathFilename()
         {
-            string text = Path.Combine(DataLocation.saveLocation, "AdvancedRoadAnarchy.xml");
-            if (!Directory.Exists(Path.GetDirectoryName(text)))
-                Directory.CreateDirectory(Path.GetDirectoryName(text));
-            return text;
+            string ModConfigDir = Path.Combine(DataLocation.localApplicationData, "ModConfig");
+            string ModDir = Path.Combine(DataLocation.localApplicationData, ModConfigDir + "\\AdvancedRoadAnarchy\\AdvancedRoadAnarchy.xml");
+            if (!Directory.Exists(Path.GetDirectoryName(ModConfigDir)))
+                Directory.CreateDirectory(Path.GetDirectoryName(ModConfigDir));
+            if (!Directory.Exists(Path.GetDirectoryName(ModDir)))
+                Directory.CreateDirectory(Path.GetDirectoryName(ModDir));
+            return ModDir;
         }
 
         public static AdvancedRoadAnarchySettings LoadSettings()
