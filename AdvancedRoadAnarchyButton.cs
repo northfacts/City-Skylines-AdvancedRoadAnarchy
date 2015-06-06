@@ -118,11 +118,15 @@ namespace AdvancedRoadAnarchy
 
         public override void Update()
         {
-            if (((this.containsMouse && Input.GetMouseButtonDown(0)) || (Input.GetKeyDown(KeyCode.L) && (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt)))) && !draggable)
+            if (this.containsMouse && Input.GetMouseButtonDown(0) && !draggable)
             {
                 tools.UpdateHook();
             }
-            else if ((Input.GetMouseButtonDown(1) || Input.GetMouseButtonDown(2)) && this.containsMouse)
+            if ((Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt)) && Input.GetKeyDown(KeyCode.L) && !draggable)
+            {
+                tools.UpdateHook();
+            }
+            if ((Input.GetMouseButtonDown(1) || Input.GetMouseButtonDown(2)) && this.containsMouse)
             {
                 if (optionbox != null)
                 {
