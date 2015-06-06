@@ -39,8 +39,8 @@ namespace AdvancedRoadAnarchy
             method = typeof(Building).GetMethods(allFlags).Single(c => c.Name == "CheckZoning" && c.GetParameters().Length == 1);
             redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AdvancedRoadAnarchyTools).GetMethod("CheckZoning", allFlags)));
 
-            method = typeof(NetTool).GetMethod("GetElevation", allFlags);
-            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AdvancedRoadAnarchyTools).GetMethod("GetElevation", allFlags)));
+            //method = typeof(NetTool).GetMethod("GetElevation", allFlags);
+            //redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AdvancedRoadAnarchyTools).GetMethod("GetElevation", allFlags)));
 
 
             method = typeof(RoadAI).GetMethod("GetElevationLimits", allFlags);
@@ -52,8 +52,8 @@ namespace AdvancedRoadAnarchy
             method = typeof(PedestrianPathAI).GetMethod("GetElevationLimits", allFlags);
             redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AdvancedRoadAnarchyTools).GetMethod("GetElevationLimits", allFlags)));
 
-            method = typeof(NetAI).GetMethod("BuildUnderground", allFlags);
-            redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AdvancedRoadAnarchyTools).GetMethod("BuildUnderground", allFlags)));
+            //method = typeof(NetAI).GetMethod("BuildUnderground", allFlags);
+            //redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AdvancedRoadAnarchyTools).GetMethod("BuildUnderground", allFlags)));
         }
 
         public void DisableHook()
@@ -110,7 +110,7 @@ namespace AdvancedRoadAnarchy
 
         public void GetElevationLimits(out int min, out int max)
         {
-            min = -10;
+            min = -64;
             max = 64;
         }
     }
