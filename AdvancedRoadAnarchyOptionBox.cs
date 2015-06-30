@@ -1,119 +1,221 @@
 ﻿using ColossalFramework.UI;
+using ColossalFramework;
 using UnityEngine;
+using System.Reflection;
+using System.Collections.Generic;
+using System;
 
 namespace AdvancedRoadAnarchy
 {
     public class AdvancedRoadAnarchyOptionBox : UIPanel
     {
-        static readonly string ARA = "AdvancedRoadAnarchy";
         private static readonly float OptionBoxTitleHeight = 50f;
-        public float panelposX = 300f;
-        public float panelposY = 200f;
 
-        private UILabel title;
-        private UIButton logo;
-        private UIButton close;
+        private enum TabList
+        {
+            Main,
+            Rules,
+            Elevation
+        }
 
-        private AdvancedRoadAnarchyCheckbox checkbox = new AdvancedRoadAnarchyCheckbox();
-        AdvancedRoadAnarchyTools tools = new AdvancedRoadAnarchyTools();
-        AdvancedRoadAnarchyInfoText infotext = new AdvancedRoadAnarchyInfoText();
- 
+        private Dictionary<string, UIComponent> optionObject = new Dictionary<string, UIComponent>();
+
         public override void Awake()
         {
             base.Awake();
-            this.transform.parent = AdvancedRoadAnarchyLoad.uiParent.transform;
-            
-            
-            this.size = new Vector2(275f,172f);
+            this.opacity = 0.01f;
+            this.transform.parent = AdvancedRoadAnarchy.Settings.uiView.transform;
+            this.size = new Vector2(295f,400f);
             this.backgroundSprite = "MenuPanel";
-            var titleObject = new GameObject(ARA + "Title");
-            titleObject.transform.parent = this.transform;
-            titleObject.transform.localPosition = Vector3.zero;
-            this.title = titleObject.AddComponent<UILabel>();
-            this.title.width = this.width;
-            this.title.height = OptionBoxTitleHeight;
-            this.title.text = "OPTIONS";
-            this.title.textAlignment = UIHorizontalAlignment.Center;
-            this.title.relativePosition = new Vector3((this.width / 2f) - (this.title.width / 2f), (OptionBoxTitleHeight / 2f) - (this.title.height / 2f));
-            UIDragHandle uIDragHandle = new GameObject(ARA + "TitleDrag")
+            var title = this.AddUIComponent<UILabel>();
+            title.width = this.width;
+            title.height = OptionBoxTitleHeight;
+            title.text = "OPTIONS";
+            title.textAlignment = UIHorizontalAlignment.Center;
+            title.relativePosition = new Vector2((this.width / 2f) - (title.width / 2f), (OptionBoxTitleHeight / 2f) - (title.height / 2f));
+            var logo = this.AddUIComponent<UIButton>();
+            logo.size = new Vector2(OptionBoxTitleHeight -10f, OptionBoxTitleHeight -10f);
+            logo.relativePosition = new Vector2(2f, 2f);
+            logo.atlas = AdvancedRoadAnarchyButton.ButtonAtlas;
+            logo.normalBgSprite = "AnarchyLogo";
+            var d = new GameObject("AdvancedRoadAnarchyTitleDrag");
+            d.transform.parent = this.cachedTransform;
+            d.transform.localPosition = Vector2.zero;
+            var DragHandle = d.AddComponent<UIDragHandle>();
+            DragHandle.size = new Vector2(this.width, OptionBoxTitleHeight);
+            var close = this.AddUIComponent<UIButton>();
+            close.size = new Vector2(30f, 30f);
+            close.relativePosition = new Vector2(this.width - 2f - close.width, 2f);
+            close.normalBgSprite = "buttonclose";
+            close.hoveredBgSprite = "buttonclosehover";
+            close.pressedBgSprite = "buttonclosepressed";
+            this.playAudioEvents = true;
+            close.eventMouseDown += (component, param) =>
             {
-                transform =
-                {
-                    parent = this.cachedTransform,
-                    localPosition = Vector3.zero
-                }
-            }.AddComponent<UIDragHandle>();
-            uIDragHandle.width = this.width;
-            uIDragHandle.height = OptionBoxTitleHeight;
-            var logoObject = new GameObject(ARA + "logo");
-            logoObject.transform.parent = this.transform;
-            logoObject.transform.localPosition = Vector3.zero;
-            this.logo = logoObject.AddComponent<UIButton>();
-            this.logo.size = new Vector2(OptionBoxTitleHeight -10f, OptionBoxTitleHeight -10f);
-            this.logo.relativePosition = new Vector3(2f, 2f);
-            this.logo.atlas = AdvancedRoadAnarchyButton.ButtonAtlas;
-            this.logo.normalBgSprite = "AnarchyLogo";
-            var closeObject = new GameObject(ARA + "close");
-            closeObject.transform.parent = this.transform;
-            closeObject.transform.localPosition = Vector3.zero;
-            this.close = closeObject.AddComponent<UIButton>();
-            this.close.size = new Vector2(30f, 30f);
-            this.close.relativePosition = new Vector3(this.width - 2f - this.close.width, 2f);
-            this.close.normalBgSprite = "buttonclose";
-            this.close.hoveredBgSprite = "buttonclosehover";
-            this.close.pressedBgSprite = "buttonclosepressed";
-            this.close.eventClick += (component, param) =>
-            {
-                OptionBoxAction("close");
-            };
-            CreateCheckbox("UnlockButton", "Draggable", 55f, false);
-            CreateCheckbox("StartOnLoad", "Enable mod by default", 92f, AdvancedRoadAnarchy.Settings.EnableByDefault);
-            CreateCheckbox("InfoText", "Enable info text", 129, AdvancedRoadAnarchy.Settings.EnableInfoText);
-            var resolutionData = AdvancedRoadAnarchy.Settings.GetResolutionData(Screen.currentResolution.width, Screen.currentResolution.height);
-            this.absolutePosition = new Vector3(0f, (resolutionData.ScreenHeight / 2) - (this.height / 2));
+                this.Hide();
+            };            
+            CreateTab();
+            this.absolutePosition = new Vector2(0f, (AdvancedRoadAnarchy.Settings.Resolutions.height / 2) - (this.height / 2));
+            this.opacity = 1f;
+            PanelTabSwitch(Enum.GetName(typeof(TabList), 0));
         }
 
-        private void CreateCheckbox(string name, string label, float posy, bool check)
+        protected override void OnVisibilityChanged()
         {
-            var l = new GameObject(ARA + name + "label");
-            l.transform.parent = this.transform;
-            l.transform.position = Vector3.zero;
-            var buttonlabel = l.AddComponent<UILabel>();
+            base.OnVisibilityChanged();
+            PlayClickSound(this);
+            if (this.isVisible)
+                PanelTabSwitch(Enum.GetName(typeof(TabList), 0));
+            else
+            {
+                AdvancedRoadAnarchy.Settings.UnlockButton = false;
+                UIComponent unlock;
+                optionObject.TryGetValue("UnlockButton", out unlock);
+                unlock.GetComponent<AdvancedRoadAnarchyCheckbox>().IsChecked = false;
+            }
+        }
+
+        private void CreateCheckbox(string name, string label, ref float start, float space, bool check, UIComponent uic)
+        {
+            var button = uic.AddUIComponent<AdvancedRoadAnarchyCheckbox>();
+            button.size = new Vector2(54f, 30f);
+            button.relativePosition = new Vector2(this.width - 22f - button.width, start + space);
+            button.IsChecked = check;
+            button.name = name;
+            optionObject.Add(name, button);
+            button.eventMouseDown += (component, param) =>
+            {
+                var value = (bool)AdvancedRoadAnarchy.Settings.GetType().GetField(name).GetValue(AdvancedRoadAnarchy.Settings);
+                value = !value;
+                AdvancedRoadAnarchy.Settings.GetType().GetField(name).SetValue(AdvancedRoadAnarchy.Settings, value);
+                button.IsChecked = value;
+                OptionBoxAction(name, button);
+            };
+            var buttonlabel = uic.AddUIComponent<UILabel>();
             buttonlabel.text = label;
             buttonlabel.height = 15f;
-            var o = new GameObject(ARA + name);
-            o.transform.parent = this.transform;
-            o.transform.position = Vector3.zero;
-            var button = o.AddComponent<AdvancedRoadAnarchyCheckbox>();
-            button.size = new Vector2(54f, 30f);
-            button.relativePosition = new Vector3(this.width - 20f - button.width, posy - 6f);
-            buttonlabel.relativePosition = new Vector3((20f), posy);
-            button.IsChecked = check;
-            button.eventClick += (component, param) =>
-            {
-                button.IsChecked = !button.IsChecked;
-                OptionBoxAction(name);
-            };
+            buttonlabel.relativePosition = new Vector2((22f), (button.relativePosition.y + (button.height / 2)) - (buttonlabel.height / 2));
+            start += button.height + space;
         }
 
-
-        public void OptionBoxAction(string action)
+        private void CreateTab()
         {
+            var Tab = Enum.GetNames(typeof(TabList));
+            float posx = 5f;
+            int index = 0;
+            foreach (string tab in Tab)
+            {
+                index += 1;
+                var button = this.AddUIComponent<UIButton>();
+                button.text = tab;
+                button.size = new Vector2((this.width - 10f) / Tab.Length, 22f);
+                button.relativePosition = new Vector2(posx + ((index - 1) * button.width), OptionBoxTitleHeight - 7f);
+                button.playAudioEvents = true;
+                button.normalBgSprite = "GenericTab";
+                button.pressedBgSprite = "GenericTabPressed";
+                button.hoveredBgSprite = "GenericTabHovered";
+                button.focusedBgSprite = null;
+                button.disabledBgSprite = "GenericTabDisabled";
+                var panel = this.AddUIComponent<UIPanel>();
+                panel.size = new Vector2(this.width - 10f, this.height - OptionBoxTitleHeight - button.height);
+                panel.backgroundSprite = "InfoPanelBack";
+                panel.relativePosition = new Vector2(posx, button.relativePosition.y + button.height + 1f);
+                OptionBoxAction("CreateTab" + tab, panel);
+                button.eventMouseDown += (component, param) =>
+                {
+                    PanelTabSwitch(tab);
+                };
+                panel.Hide();
+                optionObject.Add("Tab" + tab, button);
+                optionObject.Add("Panel" + tab, panel);
+                
+            }
+        }
+
+        private void PanelTabSwitch(string active)
+        {
+            foreach (string name in Enum.GetNames(typeof(TabList)))
+            {
+                UIComponent b;
+                UIComponent p;
+                optionObject.TryGetValue("Tab" + name, out b);
+                optionObject.TryGetValue("Panel" + name, out p);
+                var button = b.GetComponent<UIButton>();
+                var panel = p.GetComponent<UIPanel>();
+                if (active == name)
+                {
+                    button.hoveredBgSprite = null;
+                    button.pressedBgSprite = null;
+                    button.normalBgSprite = "GenericTabFocused";
+                    button.textColor = Color.black;
+                    panel.Show();
+                }
+                else
+                {
+                    button.pressedBgSprite = "GenericTabPressed";
+                    button.hoveredBgSprite = "GenericTabHovered";
+                    button.normalBgSprite = "GenericTab";
+                    button.textColor = Color.white;
+                    panel.Hide();
+                }
+            }
+        }
+
+        private void CreateModeButton(string name, string label, ref float start, float space, int mode, UIComponent uic)
+        {
+            
+            var button = uic.AddUIComponent<AdvancedRoadAnarchyModeButton>();
+            button.size = new Vector2(70f, 35f);
+            button.relativePosition = new Vector2(this.width - 22f - button.width, start + space);
+            button.m_mode = mode;
+            button.name = name;
+            optionObject.Add(name, button);
+            button.playAudioEvents = true;
+            button.eventMouseDown += (component, param) =>
+            {
+                button.m_mode += 1;
+                if (button.m_mode == 3) { button.m_mode = 0; }
+                OptionBoxAction(name, button);
+            };
+            var buttonlabel = uic.AddUIComponent<UILabel>();
+            buttonlabel.text = label;
+            buttonlabel.height = 15f;
+            buttonlabel.relativePosition = new Vector2(22f, (button.relativePosition.y + (button.height / 2)) - (buttonlabel.height / 2));
+            start += button.height + space;
+        }
+
+        public void OptionBoxAction(string action, UIComponent uic)
+        {
+            float start;
+            float space;
+            
             switch (action)
             {
-                case "StartOnLoad":
-                    AdvancedRoadAnarchy.Settings.EnableByDefault = !AdvancedRoadAnarchy.Settings.EnableByDefault;
+                case "CreateTabMain":
+                    start = 8;
+                    space = 7;
+                    CreateCheckbox("UnlockButton", "Draggable", ref start, space, false, uic);
+                    CreateCheckbox("StartOnLoad", "Enable mod by default", ref start, space, AdvancedRoadAnarchy.Settings.StartOnLoad, uic);
+                    CreateCheckbox("InfoText", "Enable info text", ref start, space, AdvancedRoadAnarchy.Settings.InfoText, uic);
                     break;
-                case "UnlockButton":
-                    AdvancedRoadAnarchyButton.draggable = !AdvancedRoadAnarchyButton.draggable;
+                case "CreateTabRules":
+                    start = 10f;
+                    space = 2f;
+                    CreateModeButton("CanCreateSegment", "Check segment creation", ref start, space, AdvancedRoadAnarchy.Settings.CanCreateSegment, uic);
+                    CreateModeButton("CheckNodeHeights", "Limit slope height", ref start, space, AdvancedRoadAnarchy.Settings.CheckNodeHeights, uic);
+                    CreateModeButton("CheckCollidingSegments", "Colliding segments", ref start, space, AdvancedRoadAnarchy.Settings.CheckCollidingSegments, uic);
+                    CreateModeButton("CheckCollidingBuildings", "Colliding buildings", ref start, space, AdvancedRoadAnarchy.Settings.CheckCollidingBuildings, uic);
+                    CreateModeButton("CheckSpace", "Space availaable", ref start, space, AdvancedRoadAnarchy.Settings.CheckSpace, uic);
+                    CreateModeButton("CheckZoning", "Zoning limitation", ref start, space, AdvancedRoadAnarchy.Settings.CheckZoning, uic);
+                    CreateCheckbox("GetElevationLimits", "Custom elevation limits", ref start, space, AdvancedRoadAnarchy.Settings.CustomElevationLimits, uic);
                     break;
-                case "InfoText":
-                    AdvancedRoadAnarchy.Settings.EnableInfoText = !AdvancedRoadAnarchy.Settings.EnableInfoText;
+                case "CanCreateSegment":
+                    var test = new AnimatedVector4(new Vector4(0, 0, 30f, 30f), new Vector4(500f, 500f, 800f, 800f), 20f);
+                    
                     break;
-                case "close":
-                    AdvancedRoadAnarchyButton.draggable = false;
-                    UIView.Find<AdvancedRoadAnarchyCheckbox>(ARA + "UnlockButton").IsChecked = false;
-                    this.Hide();
+                case "CheckNodeHeights":
+                    break;
+                case "CheckCollidingSegments":
                     break;
             }
         }
@@ -147,5 +249,44 @@ namespace AdvancedRoadAnarchy
             base.Update();
             spriteName = IsChecked ? "AnarchyOn" : "AnarchyOff";
         }
+    }
+
+    public class AdvancedRoadAnarchyModeButton : UISprite
+    {
+        public int m_mode { get; set; }
+        private static UITextureAtlas ModeAtlas = null;
+
+        private enum mode
+        {
+            Never,
+            Always,
+            Normal
+        }
+        
+        public override void Awake()
+        {
+            base.Awake();
+            if (ModeAtlas == null)
+            {
+                ModeAtlas = AdvancedRoadAnarchyButton.CreateAtlas("ModeAtlas", 462, 82, "ButtonMode.png", new[]
+                                        {
+                                            "AnarchyNever",
+                                            "AnarchyAlways",
+                                            "AnarchyNormal",
+                                        });
+            }
+            this.atlas = ModeAtlas;
+            this.m_mode = (int)mode.Never;
+            spriteName = "AnarchyNever";
+            playAudioEvents = true;
+        }
+
+        public override void Update()
+        {
+            base.Update();
+            spriteName = "Anarchy" + (mode)Enum.ToObject(typeof(mode), this.m_mode);
+        }
+
+
     }
 }

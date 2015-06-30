@@ -24,6 +24,7 @@ namespace AdvancedRoadAnarchy
             var method = typeof(NetTool).GetMethods(allFlags).Single(c => c.Name == "CanCreateSegment" && c.GetParameters().Length == 11);
             redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AdvancedRoadAnarchyTools).GetMethod("CanCreateSegment", allFlags)));
 
+            // <summary>Slope Too Step</summary>
             method = typeof(NetTool).GetMethod("CheckNodeHeights", allFlags);
             redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AdvancedRoadAnarchyTools).GetMethod("CheckNodeHeights", allFlags)));
 
@@ -41,8 +42,7 @@ namespace AdvancedRoadAnarchy
 
             //method = typeof(NetTool).GetMethod("GetElevation", allFlags);
             //redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AdvancedRoadAnarchyTools).GetMethod("GetElevation", allFlags)));
-
-
+            
             method = typeof(RoadAI).GetMethod("GetElevationLimits", allFlags);
             redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AdvancedRoadAnarchyTools).GetMethod("GetElevationLimits", allFlags)));
 
@@ -51,9 +51,6 @@ namespace AdvancedRoadAnarchy
 
             method = typeof(PedestrianPathAI).GetMethod("GetElevationLimits", allFlags);
             redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AdvancedRoadAnarchyTools).GetMethod("GetElevationLimits", allFlags)));
-
-            //method = typeof(NetAI).GetMethod("BuildUnderground", allFlags);
-            //redirects.Add(method, RedirectionHelper.RedirectCalls(method, typeof(AdvancedRoadAnarchyTools).GetMethod("BuildUnderground", allFlags)));
         }
 
         public void DisableHook()
@@ -101,11 +98,6 @@ namespace AdvancedRoadAnarchy
             var ele = (NetTool)ToolManager.instance.m_properties.CurrentTool;
             var mi = ele.GetType().GetField("m_elevation", BindingFlags.Instance | BindingFlags.NonPublic);
             return (float)Mathf.Clamp((int)mi.GetValue(ele), -512, 1920) * 6f;
-        }
-
-        public bool BuildUnderground()
-        {
-            return true;
         }
 
         public void GetElevationLimits(out int min, out int max)

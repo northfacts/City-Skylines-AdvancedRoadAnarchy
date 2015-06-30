@@ -7,33 +7,20 @@ namespace AdvancedRoadAnarchy
 {
 	public class AdvancedRoadAnarchyLoad : LoadingExtensionBase
 	{
-		UIComponent button;
-		public static UIView uiParent
-        {
-            get
-            {
-                UIView value = null;
-                foreach (var uiView in GameObject.FindObjectsOfType<UIView>())
-                {
-                    if (uiView.name == "UIView")
-                        value = uiView;
-                }
-                return value;
-            }
-        }
-
-        public override void OnLevelLoaded(LoadMode mode)
+		public override void OnLevelLoaded(LoadMode mode)
 		{
 			AdvancedRoadAnarchy.Settings = AdvancedRoadAnarchySerializer.LoadSettings();
+            AdvancedRoadAnarchy.Settings.GetResolutionData();
 			UIView aView = UIView.GetAView();
-			this.button = aView.AddUIComponent(typeof(AdvancedRoadAnarchyButton));
+            AdvancedRoadAnarchy.Settings.button = aView.AddUIComponent(typeof(AdvancedRoadAnarchyButton));
 		}
 		public override void OnLevelUnloading()
 		{
-			AdvancedRoadAnarchySerializer.SaveSettings(AdvancedRoadAnarchy.Settings);
-			if (this.button != null)
+            AdvancedRoadAnarchy.Settings.SaveResolutionData();
+            AdvancedRoadAnarchySerializer.SaveSettings(AdvancedRoadAnarchy.Settings);
+            if (AdvancedRoadAnarchy.Settings.button != null)
 			{
-				UnityEngine.Object.Destroy(this.button.gameObject);
+                UnityEngine.Object.Destroy(AdvancedRoadAnarchy.Settings.button.gameObject);
 			}
 			base.OnLevelUnloading();
 		}

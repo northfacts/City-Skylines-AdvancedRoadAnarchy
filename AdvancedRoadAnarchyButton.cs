@@ -6,10 +6,7 @@ namespace AdvancedRoadAnarchy
     public class AdvancedRoadAnarchyButton : UIButton
     {
         AdvancedRoadAnarchyTools tools = new AdvancedRoadAnarchyTools();
-        UIComponent infotext = null;
-        UIComponent optionbox = null;
-
-        public static bool draggable { get; set; }
+        
         public static UITextureAtlas ButtonAtlas = null;
         static readonly string ARA = "AdvancedRoadAnarchy";
 
@@ -24,11 +21,10 @@ namespace AdvancedRoadAnarchy
         public override void Start()
         {
             base.Start();
-            draggable = false;
+            AdvancedRoadAnarchy.Settings.UnlockButton = false;
             const int size = 43;
             this.playAudioEvents = true;
-            var resolutionData = AdvancedRoadAnarchy.Settings.GetResolutionData(Screen.currentResolution.width, Screen.currentResolution.height);
-            this.absolutePosition = new Vector3(resolutionData.ButtonPositionX, resolutionData.ButtonPositionY);
+            this.absolutePosition = AdvancedRoadAnarchy.Settings.Resolutions.ButtonPosition;
             this.disabledBgSprite = null;
             this.disabledFgSprite = null;
             
@@ -52,7 +48,10 @@ namespace AdvancedRoadAnarchy
             this.size = new Vector2(size, size);
             this.focusedBgSprite = "AnarchyNormalBg";
             this.normalBgSprite = "ButtonMenu";
-            tools.AnarchyHook = AdvancedRoadAnarchy.Settings.EnableByDefault;
+            tools.AnarchyHook = AdvancedRoadAnarchy.Settings.StartOnLoad;
+            UIView info = UIView.GetAView();
+            AdvancedRoadAnarchy.Settings.infotext = info.AddUIComponent(typeof(AdvancedRoadAnarchyInfoText));
+            AdvancedRoadAnarchy.Settings.infotext.Hide();
             UpdateButton();
         }
 
@@ -71,22 +70,21 @@ namespace AdvancedRoadAnarchy
 
         protected override void OnMouseMove(UIMouseEventParameter p)
         {
-            if (draggable && dragging)
+            if (AdvancedRoadAnarchy.Settings.UnlockButton && dragging)
             {
-                this.position = new Vector3(this.position.x + p.moveDelta.x,
-                this.position.y + p.moveDelta.y,
+                var ratio = UIView.GetAView().ratio;
+                this.position = new Vector3(this.position.x + (p.moveDelta.x * ratio),
+                this.position.y + (p.moveDelta.y * ratio),
                 this.position.z);
-                var resolutionData = AdvancedRoadAnarchy.Settings.GetResolutionData(Screen.currentResolution.width, Screen.currentResolution.height);
-                resolutionData.ButtonPositionX = this.absolutePosition.x;
-                resolutionData.ButtonPositionY = this.absolutePosition.y;
+                AdvancedRoadAnarchy.Settings.Resolutions.ButtonPosition = this.absolutePosition;
             }
             base.OnMouseMove(p);
         }
 
         public void UpdateButton()
         {
-            this.playAudioEvents = draggable ? false : true;
-            if (draggable)
+            this.playAudioEvents = AdvancedRoadAnarchy.Settings.UnlockButton ? false : true;
+            if (AdvancedRoadAnarchy.Settings.UnlockButton)
             {
                 this.normalFgSprite = null;
                 this.normalBgSprite = "AnarchyUnlockBg";
@@ -118,43 +116,30 @@ namespace AdvancedRoadAnarchy
 
         public override void Update()
         {
-            if (this.containsMouse && Input.GetMouseButtonDown(0) && !draggable)
-            {
+            if (this.containsMouse && Input.GetMouseButtonDown(0) && !AdvancedRoadAnarchy.Settings.UnlockButton)
                 tools.UpdateHook();
-            }
-            if ((Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt)) && Input.GetKeyDown(KeyCode.L) && !draggable)
+            if ((Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt)) && Input.GetKeyDown(KeyCode.L) && !AdvancedRoadAnarchy.Settings.UnlockButton)
             {
+                PlayClickSound(this);
                 tools.UpdateHook();
             }
             if ((Input.GetMouseButtonDown(1) || Input.GetMouseButtonDown(2)) && this.containsMouse)
             {
-                if (optionbox != null)
-                {
-                    optionbox.isVisible = !optionbox.isVisible;
-                    if (!optionbox.isVisible)
-                    {
-                        draggable = false;
-                        UIView.Find<AdvancedRoadAnarchyCheckbox>(ARA + "UnlockButton").IsChecked = false;
-                    }
-                }
+                if (AdvancedRoadAnarchy.Settings.optionbox != null)
+                    AdvancedRoadAnarchy.Settings.optionbox.isVisible = !AdvancedRoadAnarchy.Settings.optionbox.isVisible;
                 else
                 {
+                    PlayClickSound(this);
                     UIView option = UIView.GetAView();
-                    optionbox = option.AddUIComponent(typeof(AdvancedRoadAnarchyOptionBox));
+                    AdvancedRoadAnarchy.Settings.optionbox = option.AddUIComponent(typeof(AdvancedRoadAnarchyOptionBox));
                 }
             }
-            if (AdvancedRoadAnarchy.Settings.EnableInfoText && (draggable || tools.AnarchyHook))
-            {
-                if (infotext != null)
-                    infotext.Show();
-                else
-                {
-                    UIView info = UIView.GetAView();
-                    infotext = info.AddUIComponent(typeof(AdvancedRoadAnarchyInfoText));
-                }
-            }
-            else if (infotext != null)
-                infotext.Hide();
+            if (AdvancedRoadAnarchy.Settings.InfoText && (AdvancedRoadAnarchy.Settings.UnlockButton || tools.AnarchyHook))
+                 AdvancedRoadAnarchy.Settings.infotext.Show();
+            else if (AdvancedRoadAnarchy.Settings.infotext.isVisible)
+                AdvancedRoadAnarchy.Settings.infotext.Hide();
+            if (AdvancedRoadAnarchy.Settings.ScreenSize != AdvancedRoadAnarchy.Settings.Resolutions.size)
+                AdvancedRoadAnarchy.Settings.OnResolutionChanged();
             UpdateButton();
         }
 
@@ -201,10 +186,16 @@ namespace AdvancedRoadAnarchy
         {
             base.OnDestroy();
 
-            if (optionbox != null)
-                GameObject.Destroy(optionbox.gameObject);
-            if (infotext != null)
-                GameObject.Destroy(infotext.gameObject);
+            if (AdvancedRoadAnarchy.Settings.optionbox != null)
+                GameObject.Destroy(AdvancedRoadAnarchy.Settings.optionbox.gameObject);
+            if (AdvancedRoadAnarchy.Settings.infotext != null)
+                GameObject.Destroy(AdvancedRoadAnarchy.Settings.infotext.gameObject);
         }
+
+        //protected override void OnKeyDown(UIKeyEventParameter p)
+        //{
+        //    PlayClickSound(this);
+        //    base.OnKeyDown(p);
+        //}
     }
 }
