@@ -71,7 +71,9 @@
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="png\ButtonMode.png" />
+  </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="png\AnarchyIcons.png" />
   </ItemGroup>
