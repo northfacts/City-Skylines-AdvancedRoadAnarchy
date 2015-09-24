@@ -1,5 +1,6 @@
 ﻿using ColossalFramework.UI;
 using UnityEngine;
+using System.Reflection;
 
 namespace AdvancedRoadAnarchy
 {
@@ -21,6 +22,7 @@ namespace AdvancedRoadAnarchy
         public override void Start()
         {
             base.Start();
+            tools.Initialize();
             AdvancedRoadAnarchy.Settings.UnlockButton = false;
             const int size = 43;
             this.playAudioEvents = true;
@@ -140,6 +142,14 @@ namespace AdvancedRoadAnarchy
                 AdvancedRoadAnarchy.Settings.infotext.Hide();
             if (AdvancedRoadAnarchy.Settings.ScreenSize != AdvancedRoadAnarchy.Settings.Resolutions.size)
                 AdvancedRoadAnarchy.Settings.OnResolutionChanged();
+            if (AdvancedRoadAnarchy.Settings.ElevationLimits != AdvancedRoadAnarchy.Settings.m_ElevationLimits)
+            {
+                AdvancedRoadAnarchyTools.Redirection rule;
+                AdvancedRoadAnarchy.Settings.rules.TryGetValue(AdvancedRoadAnarchyTools.RulesList.GetElevationLimits, out rule);
+                rule.Status = AdvancedRoadAnarchy.Settings.ElevationLimits;
+                AdvancedRoadAnarchy.Settings.rules[AdvancedRoadAnarchyTools.RulesList.GetElevationLimits] = rule;
+                AdvancedRoadAnarchy.Settings.m_ElevationLimits = AdvancedRoadAnarchy.Settings.ElevationLimits;
+            }
             UpdateButton();
         }
 
@@ -185,17 +195,10 @@ namespace AdvancedRoadAnarchy
         public override void OnDestroy()
         {
             base.OnDestroy();
-
             if (AdvancedRoadAnarchy.Settings.optionbox != null)
                 GameObject.Destroy(AdvancedRoadAnarchy.Settings.optionbox.gameObject);
             if (AdvancedRoadAnarchy.Settings.infotext != null)
                 GameObject.Destroy(AdvancedRoadAnarchy.Settings.infotext.gameObject);
         }
-
-        //protected override void OnKeyDown(UIKeyEventParameter p)
-        //{
-        //    PlayClickSound(this);
-        //    base.OnKeyDown(p);
-        //}
     }
 }

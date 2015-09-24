@@ -2,21 +2,11 @@
 using UnityEngine;
 using System.Xml.Serialization;
 using ColossalFramework.UI;
+using System;
+using System.Reflection;
 
 namespace AdvancedRoadAnarchy
 {
-    public struct limits
-    {
-        public int min;
-        public int max;
-
-        public limits(int min, int max)
-        {
-            this.min = min;
-            this.max = max;
-        } 
-    }
-
     public struct AdvancedRoadAnarchyResolution
     {
  
@@ -66,17 +56,6 @@ namespace AdvancedRoadAnarchy
 
     }
 
-    public class AdvancedRoadAnarchyCustomElevationLimits
-    {
-        public limits RoadAlways = new limits(-10, 10);
-        public limits RoadActivated = new limits(-30, 30);
-        public limits TrackAlways = new limits(-10, 10);
-        public limits TrackActivated = new limits(-30, 30);
-        public limits PedestrianAlways = new limits(0, 5);
-        public limits PedestrianActivated = new limits(0, 10);
-    }
-
-
     public class AdvancedRoadAnarchySettings
     {
         [XmlIgnore]
@@ -87,19 +66,16 @@ namespace AdvancedRoadAnarchy
         public UIComponent optionbox;
         
         public List<AdvancedRoadAnarchyResolution> ResolutionsList = new List<AdvancedRoadAnarchyResolution>();
-        public AdvancedRoadAnarchyCustomElevationLimits ElevationLimits = new AdvancedRoadAnarchyCustomElevationLimits();
 
         public bool StartOnLoad = false;
         public bool InfoText = true;
         [XmlIgnore]
         public bool UnlockButton = false;
-        public int CanCreateSegment = 2;
-        public int CheckNodeHeights = 2;
-        public int CheckCollidingSegments = 2;
-        public int CheckCollidingBuildings = 2;
-        public int CheckSpace = 2;
-        public int CheckZoning = 2;
-        public bool CustomElevationLimits = true;
+        [XmlIgnore]
+        public bool m_ElevationLimits = true;
+        public bool ElevationLimits;
+        
+        public float TerrainStep = 0f;
 
         [XmlIgnore]
         public AdvancedRoadAnarchyResolution Resolutions = new AdvancedRoadAnarchyResolution();
@@ -177,5 +153,8 @@ namespace AdvancedRoadAnarchy
                 return value;
             }
         }
+
+        [XmlIgnore]
+        public Dictionary<AdvancedRoadAnarchyTools.RulesList, AdvancedRoadAnarchyTools.Redirection> rules = new Dictionary<AdvancedRoadAnarchyTools.RulesList, AdvancedRoadAnarchyTools.Redirection>();
     }
 }

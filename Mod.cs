@@ -11,7 +11,7 @@ namespace AdvancedRoadAnarchy
         
         public string Name
         {
-            get { return "Advanced Road Anarchy"; }
+            get { return "Advanced Road Anarchy " + version; }
         }
         
         public string Description
