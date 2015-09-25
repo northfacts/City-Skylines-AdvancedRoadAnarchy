@@ -1,5 +1,6 @@
 ﻿using ColossalFramework.UI;
 using UnityEngine;
+using System.Linq;
 using System.Reflection;
 
 namespace AdvancedRoadAnarchy
@@ -195,6 +196,13 @@ namespace AdvancedRoadAnarchy
         public override void OnDestroy()
         {
             base.OnDestroy();
+            for (int i = 0; i < AdvancedRoadAnarchy.Settings.rules.Count; i++)
+            {
+                var rule = AdvancedRoadAnarchy.Settings.rules.ElementAt(i);
+                var value = rule.Value;
+                value.Status = false;
+                AdvancedRoadAnarchy.Settings.rules[rule.Key] = value;
+            }
             if (AdvancedRoadAnarchy.Settings.optionbox != null)
                 GameObject.Destroy(AdvancedRoadAnarchy.Settings.optionbox.gameObject);
             if (AdvancedRoadAnarchy.Settings.infotext != null)
