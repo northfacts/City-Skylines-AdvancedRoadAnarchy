@@ -26,7 +26,13 @@ namespace AdvancedRoadAnarchy
         public static Type NetToolFine = null;
         public static ToolBase instance
         {
-            get { return UnityEngine.Object.FindObjectOfType(NetToolFine) as ToolBase; }
+            get
+            {
+                if (NetToolFine != null)
+                    return UnityEngine.Object.FindObjectOfType(NetToolFine) as ToolBase;
+                else
+                    return null;
+            }
         }
         public float TerrainStep
         {
