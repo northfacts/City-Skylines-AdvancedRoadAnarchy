@@ -12,7 +12,8 @@ namespace AdvancedRoadAnarchy
     {
         public enum RulesList
         {
-            CreateNode,
+            CanCreateSegment,
+            CheckNodeHeights,
             TestNodeBuilding,
             CheckCollidingBuildings,
             CheckSpace,
@@ -113,10 +114,15 @@ namespace AdvancedRoadAnarchy
                 var add = new Redirection();
                 switch (rule)
                 {
-                    case RulesList.CreateNode:
+                    case RulesList.CanCreateSegment:
                         if (NetToolFine != null)
-                            add.From = NetToolFine.GetMethods(allFlags).Single((MethodInfo c) => c.Name == "CreateNode" && c.GetParameters().Length == 17);
-                        add.From = typeof(NetTool).GetMethods(allFlags).Single((MethodInfo c) => c.Name == "CreateNode" && c.GetParameters().Length == 17);
+                            add.From = NetToolFine.GetMethods(allFlags).Single((MethodInfo c) => c.Name == "CanCreateSegment" && c.GetParameters().Length == 11);
+                        add.From = typeof(NetTool).GetMethods(allFlags).Single((MethodInfo c) => c.Name == "CanCreateSegment" && c.GetParameters().Length == 11);
+                        break;
+                    case RulesList.CheckNodeHeights:
+                        if (NetToolFine != null)
+                            add.From = NetToolFine.GetMethod("CheckNodeHeights", allFlags);
+                        add.From = typeof(NetTool).GetMethod("CheckNodeHeights", allFlags);
                         break;
                     case RulesList.CheckCollidingBuildings:
                         add.From = typeof(BuildingTool).GetMethod("CheckCollidingBuildings", allFlags);
@@ -197,42 +203,42 @@ namespace AdvancedRoadAnarchy
             max = Mathf.RoundToInt(255 / step);
         }
 
-        public static ToolBase.ToolErrors CreateNode(NetInfo info, NetTool.ControlPoint startPoint, NetTool.ControlPoint middlePoint, NetTool.ControlPoint endPoint, FastList<NetTool.NodePosition> nodeBuffer, int maxSegments, bool test, bool visualize, bool autoFix, bool needMoney, bool invert, bool switchDir, ushort relocateBuildingID, out ushort node, out ushort segment, out int cost, out int productionRate)
-        {
-            ushort num;
-            ushort num2;
-            ToolBase.ToolErrors toolErrors = ToolBase.ToolErrors.None;
-            if (instance != null)
-            {
-                var methodInfo = NetToolFine.GetMethods(allFlags).Single((MethodInfo c) => c.Name == "CreateNode" && c.GetParameters().Length == 18);
-                object classInstance = Activator.CreateInstance(NetToolFine, null);
-                object[] parameters = new object[] { info, startPoint, middlePoint, endPoint, nodeBuffer, maxSegments, test, visualize, autoFix, needMoney, invert, switchDir, relocateBuildingID, null, null, null, null, null };
-                toolErrors = (ToolBase.ToolErrors)methodInfo.Invoke(classInstance, parameters);
-                num = (ushort)parameters[13];
-                num2 = (ushort)parameters[14];
-                segment = (ushort)parameters[15];
-                cost = (int)parameters[16];
-                productionRate = (int)parameters[17];
-            }
-            else
-                toolErrors = NetTool.CreateNode(info, startPoint, middlePoint, endPoint, nodeBuffer, maxSegments, test, visualize, autoFix, needMoney, invert, switchDir, relocateBuildingID, out num, out num2, out segment, out cost, out productionRate);
-            if (toolErrors == ToolBase.ToolErrors.None)
-            {
-                if (num2 != 0)
-                {
-                    node = num2;
-                }
-                else
-                {
-                    node = num;
-                }
-            }
-            else
-            {
-                node = 0;
-            }
-            return ToolBase.ToolErrors.None;
-        }
+        //public static ToolBase.ToolErrors CreateNode(NetInfo info, NetTool.ControlPoint startPoint, NetTool.ControlPoint middlePoint, NetTool.ControlPoint endPoint, FastList<NetTool.NodePosition> nodeBuffer, int maxSegments, bool test, bool visualize, bool autoFix, bool needMoney, bool invert, bool switchDir, ushort relocateBuildingID, out ushort node, out ushort segment, out int cost, out int productionRate)
+        //{
+        //    ushort num;
+        //    ushort num2;
+        //    ToolBase.ToolErrors toolErrors = ToolBase.ToolErrors.None;
+        //    if (instance != null)
+        //    {
+        //        var methodInfo = NetToolFine.GetMethods(allFlags).Single((MethodInfo c) => c.Name == "CreateNode" && c.GetParameters().Length == 18);
+        //        object classInstance = Activator.CreateInstance(NetToolFine, null);
+        //        object[] parameters = new object[] { info, startPoint, middlePoint, endPoint, nodeBuffer, maxSegments, test, visualize, autoFix, needMoney, invert, switchDir, relocateBuildingID, null, null, null, null, null };
+        //        toolErrors = (ToolBase.ToolErrors)methodInfo.Invoke(classInstance, parameters);
+        //        num = (ushort)parameters[13];
+        //        num2 = (ushort)parameters[14];
+        //        segment = (ushort)parameters[15];
+        //        cost = (int)parameters[16];
+        //        productionRate = (int)parameters[17];
+        //    }
+        //    else
+        //        toolErrors = NetTool.CreateNode(info, startPoint, middlePoint, endPoint, nodeBuffer, maxSegments, test, visualize, autoFix, needMoney, invert, switchDir, relocateBuildingID, out num, out num2, out segment, out cost, out productionRate);
+        //    if (toolErrors == ToolBase.ToolErrors.None)
+        //    {
+        //        if (num2 != 0)
+        //        {
+        //            node = num2;
+        //        }
+        //        else
+        //        {
+        //            node = num;
+        //        }
+        //    }
+        //    else
+        //    {
+        //        node = 0;
+        //    }
+        //    return ToolBase.ToolErrors.None;
+        //}
 
         private static ToolBase.ToolErrors TestNodeBuilding(BuildingInfo info, Vector3 position, Vector3 direction, ushort ignoreNode, ushort ignoreSegment, ushort ignoreBuilding, bool test, ulong[] collidingSegmentBuffer, ulong[] collidingBuildingBuffer)
         {
@@ -260,6 +266,16 @@ namespace AdvancedRoadAnarchy
                 toolErrors |= ToolBase.ToolErrors.TooManyObjects;
             }
             return toolErrors;
+        }
+
+        private static ToolBase.ToolErrors CanCreateSegment(NetInfo segmentInfo, ushort startNode, ushort startSegment, ushort endNode, ushort endSegment, ushort upgrading, Vector3 startPos, Vector3 endPos, Vector3 startDir, Vector3 endDir, ulong[] collidingSegmentBuffer)
+        {
+            return ToolBase.ToolErrors.None;
+        }
+
+        private static ToolBase.ToolErrors CheckNodeHeights(NetInfo info, FastList<NetTool.NodePosition> nodeBuffer)
+        {
+            return ToolBase.ToolErrors.None;
         }
     }
 }
