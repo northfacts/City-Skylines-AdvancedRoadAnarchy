@@ -14,6 +14,7 @@ namespace AdvancedRoadAnarchy
         {
             CanCreateSegment,
             CheckNodeHeights,
+            CheckCollidingSegments,
             TestNodeBuilding,
             CheckCollidingBuildings,
             CheckSpace,
@@ -123,6 +124,9 @@ namespace AdvancedRoadAnarchy
                         if (NetToolFine != null)
                             add.From = NetToolFine.GetMethod("CheckNodeHeights", allFlags);
                         add.From = typeof(NetTool).GetMethod("CheckNodeHeights", allFlags);
+                        break;
+                    case RulesList.CheckCollidingSegments:
+                        add.From = typeof(NetTool).GetMethod("CheckCollidingSegments", allFlags);
                         break;
                     case RulesList.CheckCollidingBuildings:
                         add.From = typeof(BuildingTool).GetMethod("CheckCollidingBuildings", allFlags);
@@ -276,6 +280,11 @@ namespace AdvancedRoadAnarchy
         private static ToolBase.ToolErrors CheckNodeHeights(NetInfo info, FastList<NetTool.NodePosition> nodeBuffer)
         {
             return ToolBase.ToolErrors.None;
+        }
+
+        public static bool CheckCollidingSegments(ulong[] segmentMask, ulong[] buildingMask, ushort upgrading)
+        {
+            return false;
         }
     }
 }
