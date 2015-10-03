@@ -23,7 +23,6 @@ namespace AdvancedRoadAnarchy
         public override void Start()
         {
             base.Start();
-            tools.Initialize();
             AdvancedRoadAnarchy.Settings.UnlockButton = false;
             const int size = 43;
             this.playAudioEvents = true;
@@ -51,7 +50,6 @@ namespace AdvancedRoadAnarchy
             this.size = new Vector2(size, size);
             this.focusedBgSprite = "AnarchyNormalBg";
             this.normalBgSprite = "ButtonMenu";
-            tools.AnarchyHook = AdvancedRoadAnarchy.Settings.StartOnLoad;
             UIView info = UIView.GetAView();
             AdvancedRoadAnarchy.Settings.infotext = info.AddUIComponent(typeof(AdvancedRoadAnarchyInfoText));
             AdvancedRoadAnarchy.Settings.infotext.Hide();
@@ -119,6 +117,8 @@ namespace AdvancedRoadAnarchy
 
         public override void Update()
         {
+            if (AdvancedRoadAnarchy.Settings.rules.Count == 0)
+                tools.Initialize();
             if (this.containsMouse && Input.GetMouseButtonDown(0) && !AdvancedRoadAnarchy.Settings.UnlockButton)
                 tools.UpdateHook();
             if ((Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt)) && Input.GetKeyDown(KeyCode.L) && !AdvancedRoadAnarchy.Settings.UnlockButton)
@@ -145,10 +145,13 @@ namespace AdvancedRoadAnarchy
                 AdvancedRoadAnarchy.Settings.OnResolutionChanged();
             if (AdvancedRoadAnarchy.Settings.ElevationLimits != AdvancedRoadAnarchy.Settings.m_ElevationLimits)
             {
-                AdvancedRoadAnarchyTools.Redirection rule;
-                AdvancedRoadAnarchy.Settings.rules.TryGetValue(AdvancedRoadAnarchyTools.RulesList.GetElevationLimits, out rule);
-                rule.Status = AdvancedRoadAnarchy.Settings.ElevationLimits;
-                AdvancedRoadAnarchy.Settings.rules[AdvancedRoadAnarchyTools.RulesList.GetElevationLimits] = rule;
+                if (!tools.AnarchyHook)
+                {
+                    AdvancedRoadAnarchyTools.Redirection rule;
+                    AdvancedRoadAnarchy.Settings.rules.TryGetValue(AdvancedRoadAnarchyTools.RulesList.GetElevationLimits, out rule);
+                    rule.Status = AdvancedRoadAnarchy.Settings.ElevationLimits;
+                    AdvancedRoadAnarchy.Settings.rules[AdvancedRoadAnarchyTools.RulesList.GetElevationLimits] = rule;
+                }
                 AdvancedRoadAnarchy.Settings.m_ElevationLimits = AdvancedRoadAnarchy.Settings.ElevationLimits;
             }
             UpdateButton();
@@ -203,6 +206,7 @@ namespace AdvancedRoadAnarchy
                 value.Status = false;
                 AdvancedRoadAnarchy.Settings.rules[rule.Key] = value;
             }
+            AdvancedRoadAnarchy.Settings.rules.Clear();
             if (AdvancedRoadAnarchy.Settings.optionbox != null)
                 GameObject.Destroy(AdvancedRoadAnarchy.Settings.optionbox.gameObject);
             if (AdvancedRoadAnarchy.Settings.infotext != null)

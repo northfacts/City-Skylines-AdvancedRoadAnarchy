@@ -26,16 +26,16 @@ namespace AdvancedRoadAnarchy
         public static BindingFlags allFlags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
 
         public static Type NetToolFine = null;
-        public static ToolBase instance
-        {
-            get
-            {
-                if (NetToolFine != null)
-                    return UnityEngine.Object.FindObjectOfType(NetToolFine) as ToolBase;
-                else
-                    return null;
-            }
-        }
+        //public static ToolBase instance
+        //{
+        //    get
+        //    {
+        //        if (NetToolFine != null)
+        //            return UnityEngine.Object.FindObjectOfType(NetToolFine) as ToolBase;
+        //        else
+        //            return null;
+        //    }
+        //}
         public float TerrainStep
         {
             get
@@ -109,6 +109,8 @@ namespace AdvancedRoadAnarchy
             {
                 NetToolFine = Type.GetType("NetToolFine, FineRoadHeights");
                 TerrainStep = AdvancedRoadAnarchy.Settings.TerrainStep;
+                if (!(UnityEngine.Object.FindObjectOfType(NetToolFine) as ToolBase))
+                    NetToolFine = null;
             }
             foreach (RulesList rule in Enum.GetValues(typeof(RulesList)))
             {
@@ -118,12 +120,14 @@ namespace AdvancedRoadAnarchy
                     case RulesList.CanCreateSegment:
                         if (NetToolFine != null)
                             add.From = NetToolFine.GetMethods(allFlags).Single((MethodInfo c) => c.Name == "CanCreateSegment" && c.GetParameters().Length == 11);
-                        add.From = typeof(NetTool).GetMethods(allFlags).Single((MethodInfo c) => c.Name == "CanCreateSegment" && c.GetParameters().Length == 11);
+                        else
+                            add.From = typeof(NetTool).GetMethods(allFlags).Single((MethodInfo c) => c.Name == "CanCreateSegment" && c.GetParameters().Length == 11);
                         break;
                     case RulesList.CheckNodeHeights:
                         if (NetToolFine != null)
                             add.From = NetToolFine.GetMethod("CheckNodeHeights", allFlags);
-                        add.From = typeof(NetTool).GetMethod("CheckNodeHeights", allFlags);
+                        else
+                            add.From = typeof(NetTool).GetMethod("CheckNodeHeights", allFlags);
                         break;
                     case RulesList.CheckCollidingSegments:
                         add.From = typeof(NetTool).GetMethod("CheckCollidingSegments", allFlags);
@@ -137,9 +141,12 @@ namespace AdvancedRoadAnarchy
                     case RulesList.GetElevationLimits:
                         if (NetToolFine != null)
                             add.From = NetToolFine.GetMethods(allFlags).Single((MethodInfo c) => c.Name == "GetAdjustedElevationLimits" && c.GetParameters().Length == 3);
-                        add.From = typeof(RoadAI).GetMethod("GetElevationLimits", allFlags);
-                        add.From = typeof(PedestrianPathAI).GetMethod("GetElevationLimits", allFlags);
-                        add.From = typeof(TrainTrackAI).GetMethod("GetElevationLimits", allFlags);
+                        else
+                        {
+                            add.From = typeof(RoadAI).GetMethod("GetElevationLimits", allFlags);
+                            add.From = typeof(PedestrianPathAI).GetMethod("GetElevationLimits", allFlags);
+                            add.From = typeof(TrainTrackAI).GetMethod("GetElevationLimits", allFlags);
+                        }
                         break;
                     case RulesList.TestNodeBuilding:
                         add.From = typeof(NetTool).GetMethod("TestNodeBuilding", allFlags);
@@ -154,6 +161,13 @@ namespace AdvancedRoadAnarchy
                 AdvancedRoadAnarchy.Settings.rules.TryGetValue(RulesList.GetElevationLimits, out value);
                 value.Status = true;
                 AdvancedRoadAnarchy.Settings.rules[RulesList.GetElevationLimits] = value;
+            }
+            else
+                AdvancedRoadAnarchy.Settings.m_ElevationLimits = false;
+            if (AdvancedRoadAnarchy.Settings.StartOnLoad)
+            {
+                AnarchyHook = AdvancedRoadAnarchy.Settings.StartOnLoad;
+                EnableHook();
             }
         }
 
@@ -201,7 +215,7 @@ namespace AdvancedRoadAnarchy
         public void GetElevationLimits(out int min, out int max)
         {
             float step = 12f;
-            if (instance != null)
+            if (NetToolFine != null)
                 step = TerrainStep;
             min = Mathf.RoundToInt(-120 / step);
             max = Mathf.RoundToInt(255 / step);
