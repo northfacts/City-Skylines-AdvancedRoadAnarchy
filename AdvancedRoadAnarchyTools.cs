@@ -126,8 +126,7 @@ namespace AdvancedRoadAnarchy
                     case RulesList.CheckNodeHeights:
                         if (NetToolFine != null)
                             add.From = NetToolFine.GetMethod("CheckNodeHeights", allFlags);
-                        else
-                            add.From = typeof(NetTool).GetMethod("CheckNodeHeights", allFlags);
+                        add.From = typeof(NetTool).GetMethod("CheckNodeHeights", allFlags);
                         break;
                     case RulesList.CheckCollidingSegments:
                         add.From = typeof(NetTool).GetMethod("CheckCollidingSegments", allFlags);
