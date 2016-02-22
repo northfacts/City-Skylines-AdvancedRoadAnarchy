@@ -97,6 +97,7 @@ namespace AdvancedRoadAnarchy
                 this.Resolutions = resolution;
             else
                 this.Resolutions.size = this.ScreenSize;
+            OnResolutionChanged();
         }
 
 

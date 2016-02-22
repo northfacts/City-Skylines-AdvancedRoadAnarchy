@@ -266,6 +266,11 @@ namespace AdvancedRoadAnarchy
                 vector2 *= 0.7f;
                 vector *= 0.7f;
             }
+            ItemClass.CollisionType collisionType = ItemClass.CollisionType.Terrain;
+            if (info.m_class.m_layer == ItemClass.Layer.WaterPipes)
+            {
+                collisionType = ItemClass.CollisionType.Underground;
+            }
             Vector2 a = VectorUtils.XZ(position);
             Quad2 quad = default(Quad2);
             quad.a = a - vector2 - vector;
@@ -275,8 +280,8 @@ namespace AdvancedRoadAnarchy
             ToolBase.ToolErrors toolErrors = ToolBase.ToolErrors.None;
             float minY = Mathf.Min(position.y, Singleton<TerrainManager>.instance.SampleRawHeightSmooth(position));
             float maxY = position.y + info.m_generatedInfo.m_size.y;
-            Singleton<NetManager>.instance.OverlapQuad(quad, minY, maxY, info.m_class.m_layer, ignoreNode, 0, ignoreSegment, collidingSegmentBuffer);
-            Singleton<BuildingManager>.instance.OverlapQuad(quad, minY, maxY, info.m_class.m_layer, ignoreBuilding, ignoreNode, 0, collidingBuildingBuffer);
+            Singleton<NetManager>.instance.OverlapQuad(quad, minY, maxY, collisionType, info.m_class.m_layer, ignoreNode, 0, ignoreSegment, collidingSegmentBuffer);
+            Singleton<BuildingManager>.instance.OverlapQuad(quad, minY, maxY, collisionType, info.m_class.m_layer, ignoreBuilding, ignoreNode, 0, collidingBuildingBuffer);
             
             if (!Singleton<BuildingManager>.instance.CheckLimits())
             {
