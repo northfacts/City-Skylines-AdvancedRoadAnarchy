@@ -121,7 +121,7 @@ namespace AdvancedRoadAnarchy
                         if (NetToolFine != null)
                             add.From = NetToolFine.GetMethods(allFlags).Single((MethodInfo c) => c.Name == "CanCreateSegment" && c.GetParameters().Length == 11);
                         else
-                            add.From = typeof(NetTool).GetMethods(allFlags).Single((MethodInfo c) => c.Name == "CanCreateSegment" && c.GetParameters().Length == 11);
+                            add.From = typeof(NetTool).GetMethods(allFlags).Single((MethodInfo c) => c.Name == "CanCreateSegment" && c.GetParameters().Length == 12);
                         break;
                     case RulesList.CheckNodeHeights:
                         if (NetToolFine != null)
@@ -151,7 +151,13 @@ namespace AdvancedRoadAnarchy
                         add.From = typeof(NetTool).GetMethod("TestNodeBuilding", allFlags);
                         break;
                 }
-                add.To = typeof(AdvancedRoadAnarchyTools).GetMethod(rule.ToString(), allFlags);
+                if (rule == RulesList.CanCreateSegment)
+                    if (NetToolFine != null)
+                        add.To = typeof(AdvancedRoadAnarchyTools).GetMethod("CanCreateSegment", allFlags);
+                    else
+                        add.To = typeof(AdvancedRoadAnarchyTools).GetMethod("CanCreateSegment2", allFlags);
+                else
+                    add.To = typeof(AdvancedRoadAnarchyTools).GetMethod(rule.ToString(), allFlags);
                 AdvancedRoadAnarchy.Settings.rules.Add(rule, add);
             }
             if (AdvancedRoadAnarchy.Settings.ElevationLimits)
@@ -291,6 +297,11 @@ namespace AdvancedRoadAnarchy
         }
 
         private static ToolBase.ToolErrors CanCreateSegment(NetInfo segmentInfo, ushort startNode, ushort startSegment, ushort endNode, ushort endSegment, ushort upgrading, Vector3 startPos, Vector3 endPos, Vector3 startDir, Vector3 endDir, ulong[] collidingSegmentBuffer)
+        {
+            return ToolBase.ToolErrors.None;
+        }
+
+        private static ToolBase.ToolErrors CanCreateSegment2(NetInfo segmentInfo, ushort startNode, ushort startSegment, ushort endNode, ushort endSegment, ushort upgrading, Vector3 startPos, Vector3 endPos, Vector3 startDir, Vector3 endDir, ulong[] collidingSegmentBuffer, bool testEnds)
         {
             return ToolBase.ToolErrors.None;
         }
