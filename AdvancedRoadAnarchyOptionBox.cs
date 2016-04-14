@@ -15,7 +15,7 @@ namespace AdvancedRoadAnarchy
             base.Awake();
             this.opacity = 0.01f;
             this.transform.parent = AdvancedRoadAnarchy.Settings.uiView.transform;
-            this.size = new Vector2(295f,200f);
+            this.size = new Vector2(295f,235f);
             this.backgroundSprite = "MenuPanel";
             var title = this.AddUIComponent<UILabel>();
             title.width = this.width;
@@ -50,6 +50,7 @@ namespace AdvancedRoadAnarchy
             CreateCheckbox("StartOnLoad", "Enable mod by default", ref start, space, AdvancedRoadAnarchy.Settings.StartOnLoad);
             CreateCheckbox("InfoText", "Enable info text", ref start, space, AdvancedRoadAnarchy.Settings.InfoText);
             CreateCheckbox("ElevationLimits", "Elevation limits", ref start, space, AdvancedRoadAnarchy.Settings.ElevationLimits);
+            CreateCheckbox("CheckNodeHeights", "Slope Limits", ref start, space, AdvancedRoadAnarchy.Settings.CheckNodeHeights);
             this.absolutePosition = new Vector2(0f, (AdvancedRoadAnarchy.Settings.Resolutions.height / 2) - (this.height / 2));
             this.opacity = 1f;
         }

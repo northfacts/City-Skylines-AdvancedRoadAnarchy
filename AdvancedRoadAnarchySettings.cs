@@ -2,8 +2,6 @@
 using UnityEngine;
 using System.Xml.Serialization;
 using ColossalFramework.UI;
-using System;
-using System.Reflection;
 
 namespace AdvancedRoadAnarchy
 {
@@ -74,9 +72,10 @@ namespace AdvancedRoadAnarchy
         [XmlIgnore]
         public bool m_ElevationLimits = true;
         public bool ElevationLimits;
+        [XmlIgnore]
+        public bool m_ChechNodeHeights = false;
+        public bool CheckNodeHeights;
         
-        public float TerrainStep = 0f;
-
         [XmlIgnore]
         public AdvancedRoadAnarchyResolution Resolutions = new AdvancedRoadAnarchyResolution();
 

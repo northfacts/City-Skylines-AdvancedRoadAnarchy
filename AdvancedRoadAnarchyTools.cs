@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Linq;
 using System;
 using ColossalFramework;
+using ColossalFramework.UI;
 using ColossalFramework.Math;
 
 namespace AdvancedRoadAnarchy
@@ -21,44 +22,45 @@ namespace AdvancedRoadAnarchy
             GetElevationLimits
         }
 
-        public bool AnarchyHook = false;
+        public static bool AnarchyHook = false;
 
         public static BindingFlags allFlags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
 
-        public static Type NetToolFine = null;
-        //public static ToolBase instance
-        //{
-        //    get
-        //    {
-        //        if (NetToolFine != null)
-        //            return UnityEngine.Object.FindObjectOfType(NetToolFine) as ToolBase;
-        //        else
-        //            return null;
-        //    }
-        //}
-        public float TerrainStep
-        {
-            get
-            {
-                float step = (float)NetToolFine.GetField("m_terrainStep", allFlags).GetValue(NetToolFine);
-                if (step != AdvancedRoadAnarchy.Settings.TerrainStep)
-                    AdvancedRoadAnarchy.Settings.TerrainStep = step;
-                return step;
-            }
-            set
-            {
-                if (AdvancedRoadAnarchy.Settings.TerrainStep < (float)NetToolFine.GetField("m_terrainStep", allFlags).GetValue(NetToolFine))
-                    AdvancedRoadAnarchy.Settings.TerrainStep = (float)NetToolFine.GetField("m_terrainStep", allFlags).GetValue(NetToolFine);
-                else
-                    NetToolFine.GetField("m_terrainStep", allFlags).SetValue(NetToolFine, value);
-            }
-        }
+        public static UICheckBox FineRoadTool = null;
 
         public struct Redirection
         {
             private bool m_Status;
             private Dictionary<MethodInfo, RedirectCallsState> m_CallState;
             private List<MethodInfo> FromList;
+            private bool m_Lock;
+            private bool m_LockState;
+            public bool superLock;
+
+            public bool Lock
+            {
+                get { return m_Lock; }
+                set
+                {
+                    if (value != this.m_Lock && !this.superLock)
+                    {
+                        if (value)
+                        {
+                            this.Status = this.m_LockState;
+                            this.m_Lock = value;
+                        }
+                        else
+                        {
+                            this.m_Lock = value;
+                            this.Status = AdvancedRoadAnarchyTools.AnarchyHook;
+                        }
+                    }
+                }
+            }
+            public bool LockState
+            {
+                set { this.m_LockState = value; }
+            }
 
             public MethodInfo From
             {
@@ -78,55 +80,66 @@ namespace AdvancedRoadAnarchy
                 {
                     if (value != this.m_Status)
                     {
-                        if (value)
+                        if (!m_Lock)
                         {
-                            if (m_CallState == null)
-                                m_CallState = new Dictionary<MethodInfo, RedirectCallsState>();
-                            foreach (var from in FromList)
+                            if (value)
                             {
-                                this.m_CallState.Add(from, RedirectionHelper.RedirectCalls(from, To));
+                                if (m_CallState == null)
+                                    m_CallState = new Dictionary<MethodInfo, RedirectCallsState>();
+                                foreach (var from in FromList)
+                                {
+                                    this.m_CallState.Add(from, RedirectionHelper.RedirectCalls(from, To));
+                                }
                             }
-                        }
-                        else
-                        {
-                            foreach (var kvp in m_CallState)
+                            else
                             {
-                                RedirectionHelper.RevertRedirect(kvp.Key, kvp.Value);
+                                foreach (var kvp in m_CallState)
+                                {
+                                    RedirectionHelper.RevertRedirect(kvp.Key, kvp.Value);
+                                }
+                                m_CallState.Clear();
                             }
-                            m_CallState.Clear();
+                            this.m_Status = value;
                         }
-                        this.m_Status = value;
                     }
                 }
             }
         }
 
 
-
         public void Initialize()
         {
-            if (AppDomain.CurrentDomain.GetAssemblies().Any(q => q.FullName.Contains("FineRoadHeights")))
+            if (AppDomain.CurrentDomain.GetAssemblies().Any(q => q.FullName.Contains("FineRoadTool")))
             {
-                NetToolFine = Type.GetType("NetToolFine, FineRoadHeights");
-                TerrainStep = AdvancedRoadAnarchy.Settings.TerrainStep;
-                if (!(UnityEngine.Object.FindObjectOfType(NetToolFine) as ToolBase))
-                    NetToolFine = null;
+                FineRoadTool = UIView.GetAView().FindUIComponent<UICheckBox>("FRT_StraightSlope");
+                if (FineRoadTool != null)
+                {
+                    FineRoadTool.eventCheckChanged += (c, state) =>
+                    {
+                        Redirection rule;
+                        AdvancedRoadAnarchy.Settings.rules.TryGetValue(RulesList.CheckNodeHeights, out rule);
+                        if (state)
+                        {
+                            rule.Lock = true;
+                            rule.superLock = true;
+                        }
+                        else
+                        {
+                            rule.superLock = false;
+                            rule.Lock = AdvancedRoadAnarchy.Settings.CheckNodeHeights;
+                        }
+                        AdvancedRoadAnarchy.Settings.rules[RulesList.CheckNodeHeights] = rule;
+                    };
+                }
             }
             foreach (RulesList rule in Enum.GetValues(typeof(RulesList)))
             {
                 var add = new Redirection();
                 switch (rule)
                 {
-                    case RulesList.CanCreateSegment:
-                        if (NetToolFine != null)
-                            add.From = NetToolFine.GetMethods(allFlags).Single((MethodInfo c) => c.Name == "CanCreateSegment" && c.GetParameters().Length == 11);
-                        else
-                            add.From = typeof(NetTool).GetMethods(allFlags).Single((MethodInfo c) => c.Name == "CanCreateSegment" && c.GetParameters().Length == 12);
-                        break;
                     case RulesList.CheckNodeHeights:
-                        if (NetToolFine != null)
-                            add.From = NetToolFine.GetMethod("CheckNodeHeights", allFlags);
                         add.From = typeof(NetTool).GetMethod("CheckNodeHeights", allFlags);
+                        add.LockState = false;
                         break;
                     case RulesList.CheckCollidingSegments:
                         add.From = typeof(NetTool).GetMethod("CheckCollidingSegments", allFlags);
@@ -138,37 +151,39 @@ namespace AdvancedRoadAnarchy
                         add.From = typeof(BuildingTool).GetMethod("CheckSpace", allFlags);
                         break;
                     case RulesList.GetElevationLimits:
-                        if (NetToolFine != null)
-                            add.From = NetToolFine.GetMethods(allFlags).Single((MethodInfo c) => c.Name == "GetAdjustedElevationLimits" && c.GetParameters().Length == 3);
-                        else
-                        {
-                            add.From = typeof(RoadAI).GetMethod("GetElevationLimits", allFlags);
-                            add.From = typeof(PedestrianPathAI).GetMethod("GetElevationLimits", allFlags);
-                            add.From = typeof(TrainTrackAI).GetMethod("GetElevationLimits", allFlags);
-                        }
+                        add.From = typeof(RoadAI).GetMethod("GetElevationLimits", allFlags);
+                        add.From = typeof(PedestrianPathAI).GetMethod("GetElevationLimits", allFlags);
+                        add.From = typeof(TrainTrackAI).GetMethod("GetElevationLimits", allFlags);
+                        add.LockState = true;
                         break;
                     case RulesList.TestNodeBuilding:
                         add.From = typeof(NetTool).GetMethod("TestNodeBuilding", allFlags);
                         break;
+                    case RulesList.CanCreateSegment:
+                        add.From = typeof(NetTool).GetMethods(allFlags).Single((MethodInfo c) => c.Name == "CanCreateSegment" && c.GetParameters().Length == 12);
+                        break;
                 }
-                if (rule == RulesList.CanCreateSegment)
-                    if (NetToolFine != null)
-                        add.To = typeof(AdvancedRoadAnarchyTools).GetMethod("CanCreateSegment", allFlags);
-                    else
-                        add.To = typeof(AdvancedRoadAnarchyTools).GetMethod("CanCreateSegment2", allFlags);
-                else
-                    add.To = typeof(AdvancedRoadAnarchyTools).GetMethod(rule.ToString(), allFlags);
+                add.To = typeof(AdvancedRoadAnarchyTools).GetMethod(rule.ToString(), allFlags);
                 AdvancedRoadAnarchy.Settings.rules.Add(rule, add);
             }
             if (AdvancedRoadAnarchy.Settings.ElevationLimits)
             {
                 Redirection value;
                 AdvancedRoadAnarchy.Settings.rules.TryGetValue(RulesList.GetElevationLimits, out value);
-                value.Status = true;
+                value.Lock = true;
                 AdvancedRoadAnarchy.Settings.rules[RulesList.GetElevationLimits] = value;
             }
             else
                 AdvancedRoadAnarchy.Settings.m_ElevationLimits = false;
+            if (AdvancedRoadAnarchy.Settings.CheckNodeHeights)
+            {
+                Redirection value;
+                AdvancedRoadAnarchy.Settings.rules.TryGetValue(RulesList.CheckNodeHeights, out value);
+                value.Lock = true;
+                AdvancedRoadAnarchy.Settings.rules[RulesList.CheckNodeHeights] = value;
+            }
+            else
+                AdvancedRoadAnarchy.Settings.CheckNodeHeights = false;
             if (AdvancedRoadAnarchy.Settings.StartOnLoad)
             {
                 AnarchyHook = AdvancedRoadAnarchy.Settings.StartOnLoad;
@@ -199,8 +214,6 @@ namespace AdvancedRoadAnarchy
             for (int i = 0; i < AdvancedRoadAnarchy.Settings.rules.Count; i++)
             {
                 var rule = AdvancedRoadAnarchy.Settings.rules.ElementAt(i);
-                if (rule.Key == RulesList.GetElevationLimits && AdvancedRoadAnarchy.Settings.ElevationLimits)
-                    continue;
                 var value = rule.Value;
                 value.Status = false;
                 AdvancedRoadAnarchy.Settings.rules[rule.Key] = value;
@@ -220,48 +233,9 @@ namespace AdvancedRoadAnarchy
         public void GetElevationLimits(out int min, out int max)
         {
             float step = 12f;
-            if (NetToolFine != null)
-                step = TerrainStep;
             min = Mathf.RoundToInt(-120 / step);
             max = Mathf.RoundToInt(255 / step);
         }
-
-        //public static ToolBase.ToolErrors CreateNode(NetInfo info, NetTool.ControlPoint startPoint, NetTool.ControlPoint middlePoint, NetTool.ControlPoint endPoint, FastList<NetTool.NodePosition> nodeBuffer, int maxSegments, bool test, bool visualize, bool autoFix, bool needMoney, bool invert, bool switchDir, ushort relocateBuildingID, out ushort node, out ushort segment, out int cost, out int productionRate)
-        //{
-        //    ushort num;
-        //    ushort num2;
-        //    ToolBase.ToolErrors toolErrors = ToolBase.ToolErrors.None;
-        //    if (instance != null)
-        //    {
-        //        var methodInfo = NetToolFine.GetMethods(allFlags).Single((MethodInfo c) => c.Name == "CreateNode" && c.GetParameters().Length == 18);
-        //        object classInstance = Activator.CreateInstance(NetToolFine, null);
-        //        object[] parameters = new object[] { info, startPoint, middlePoint, endPoint, nodeBuffer, maxSegments, test, visualize, autoFix, needMoney, invert, switchDir, relocateBuildingID, null, null, null, null, null };
-        //        toolErrors = (ToolBase.ToolErrors)methodInfo.Invoke(classInstance, parameters);
-        //        num = (ushort)parameters[13];
-        //        num2 = (ushort)parameters[14];
-        //        segment = (ushort)parameters[15];
-        //        cost = (int)parameters[16];
-        //        productionRate = (int)parameters[17];
-        //    }
-        //    else
-        //        toolErrors = NetTool.CreateNode(info, startPoint, middlePoint, endPoint, nodeBuffer, maxSegments, test, visualize, autoFix, needMoney, invert, switchDir, relocateBuildingID, out num, out num2, out segment, out cost, out productionRate);
-        //    if (toolErrors == ToolBase.ToolErrors.None)
-        //    {
-        //        if (num2 != 0)
-        //        {
-        //            node = num2;
-        //        }
-        //        else
-        //        {
-        //            node = num;
-        //        }
-        //    }
-        //    else
-        //    {
-        //        node = 0;
-        //    }
-        //    return ToolBase.ToolErrors.None;
-        //}
 
         private static ToolBase.ToolErrors TestNodeBuilding(BuildingInfo info, Vector3 position, Vector3 direction, ushort ignoreNode, ushort ignoreSegment, ushort ignoreBuilding, bool test, ulong[] collidingSegmentBuffer, ulong[] collidingBuildingBuffer)
         {
@@ -296,12 +270,7 @@ namespace AdvancedRoadAnarchy
             return toolErrors;
         }
 
-        private static ToolBase.ToolErrors CanCreateSegment(NetInfo segmentInfo, ushort startNode, ushort startSegment, ushort endNode, ushort endSegment, ushort upgrading, Vector3 startPos, Vector3 endPos, Vector3 startDir, Vector3 endDir, ulong[] collidingSegmentBuffer)
-        {
-            return ToolBase.ToolErrors.None;
-        }
-
-        private static ToolBase.ToolErrors CanCreateSegment2(NetInfo segmentInfo, ushort startNode, ushort startSegment, ushort endNode, ushort endSegment, ushort upgrading, Vector3 startPos, Vector3 endPos, Vector3 startDir, Vector3 endDir, ulong[] collidingSegmentBuffer, bool testEnds)
+        private static ToolBase.ToolErrors CanCreateSegment(NetInfo segmentInfo, ushort startNode, ushort startSegment, ushort endNode, ushort endSegment, ushort upgrading, Vector3 startPos, Vector3 endPos, Vector3 startDir, Vector3 endDir, ulong[] collidingSegmentBuffer, bool testEnds)
         {
             return ToolBase.ToolErrors.None;
         }
