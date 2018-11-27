@@ -1,13 +1,11 @@
 ﻿using ICities;
-using ColossalFramework.UI;
-using UnityEngine;
 
 namespace AdvancedRoadAnarchy
 {
     public class AdvancedRoadAnarchy : IUserMod
     {
         public static AdvancedRoadAnarchySettings Settings = new AdvancedRoadAnarchySettings();
-        public static double version = 1.3;
+        public static double version = 1.4;
         
         public string Name
         {

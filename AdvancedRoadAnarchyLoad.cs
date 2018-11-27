@@ -7,9 +7,11 @@ namespace AdvancedRoadAnarchy
 	{
 		public override void OnLevelLoaded(LoadMode mode)
 		{
-			AdvancedRoadAnarchy.Settings = AdvancedRoadAnarchySerializer.LoadSettings();
+            AdvancedRoadAnarchyTools.Initialize();
+            AdvancedRoadAnarchy.Settings = AdvancedRoadAnarchySerializer.LoadSettings();
             AdvancedRoadAnarchy.Settings.GetResolutionData();
-			UIView aView = UIView.GetAView();
+            AdvancedRoadAnarchyTools.AnarchyHook = AdvancedRoadAnarchy.Settings.StartOnLoad;
+            UIView aView = UIView.GetAView();
             AdvancedRoadAnarchy.Settings.button = aView.AddUIComponent(typeof(AdvancedRoadAnarchyButton));
 		}
 		public override void OnLevelUnloading()

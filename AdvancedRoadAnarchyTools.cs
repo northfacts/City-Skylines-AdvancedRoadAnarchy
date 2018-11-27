@@ -19,14 +19,33 @@ namespace AdvancedRoadAnarchy
             TestNodeBuilding,
             CheckCollidingBuildings,
             CheckSpace,
-            GetElevationLimits
+            GetElevationLimits,
+            CreateNode
         }
 
-        public static bool AnarchyHook = false;
+        public static bool FindFRTCheckbox = false;
+        private static bool m_AnarchyHook = false;
+        public static bool AnarchyHook
+        {
+            get { return m_AnarchyHook; }
+            set
+            {
+                for (int i = 0; i < rules.Count; i++)
+                {
+                    var rule = rules.ElementAt(i);
+                    var v = rule.Value;
+                    v.Status = value;
+                    rules[rule.Key] = v;
+                }
+                m_AnarchyHook = value;
+            }
+        }
 
         public static BindingFlags allFlags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
 
-        public static UICheckBox FineRoadTool = null;
+        private static UICheckBox FineRoadTool = null;
+
+        public static Dictionary<RulesList, Redirection> rules = new Dictionary<RulesList, Redirection>();
 
         public struct Redirection
         {
@@ -42,7 +61,7 @@ namespace AdvancedRoadAnarchy
                 get { return m_Lock; }
                 set
                 {
-                    if (value != this.m_Lock && !this.superLock)
+                    if (value != this.m_Lock && this.superLock != true)
                     {
                         if (value)
                         {
@@ -80,7 +99,7 @@ namespace AdvancedRoadAnarchy
                 {
                     if (value != this.m_Status)
                     {
-                        if (!m_Lock)
+                        if (m_Lock == false && superLock == false)
                         {
                             if (value)
                             {
@@ -106,31 +125,39 @@ namespace AdvancedRoadAnarchy
             }
         }
 
+        public static void CheckFineRoadTool()
+        {
+            FineRoadTool = UIView.GetAView().FindUIComponent<UICheckBox>("FRT_StraightSlope");
+            if (FineRoadTool != null)
+            {
+                FineRoadTool.eventCheckChanged += (c, state) =>
+                {
+                    Redirection rule;
+                    rules.TryGetValue(RulesList.CheckNodeHeights, out rule);
+                    if (state)
+                    {
+                        rule.Lock = true;
+                        rule.superLock = true;
+                    }
+                    else
+                    {
+                        rule.superLock = false;
+                        rule.Lock = AdvancedRoadAnarchy.Settings.CheckNodeHeights;
+                    }
+                    rules[RulesList.CheckNodeHeights] = rule;
+                };
+                FindFRTCheckbox = false;
+                Debug.Log("Auto disable straight slope activated");
+            }
+        }
 
-        public void Initialize()
+
+        public static void Initialize()
         {
             if (AppDomain.CurrentDomain.GetAssemblies().Any(q => q.FullName.Contains("FineRoadTool")))
             {
-                FineRoadTool = UIView.GetAView().FindUIComponent<UICheckBox>("FRT_StraightSlope");
-                if (FineRoadTool != null)
-                {
-                    FineRoadTool.eventCheckChanged += (c, state) =>
-                    {
-                        Redirection rule;
-                        AdvancedRoadAnarchy.Settings.rules.TryGetValue(RulesList.CheckNodeHeights, out rule);
-                        if (state)
-                        {
-                            rule.Lock = true;
-                            rule.superLock = true;
-                        }
-                        else
-                        {
-                            rule.superLock = false;
-                            rule.Lock = AdvancedRoadAnarchy.Settings.CheckNodeHeights;
-                        }
-                        AdvancedRoadAnarchy.Settings.rules[RulesList.CheckNodeHeights] = rule;
-                    };
-                }
+                FindFRTCheckbox = true;
+                Debug.Log("FineRoadTool was found");
             }
             foreach (RulesList rule in Enum.GetValues(typeof(RulesList)))
             {
@@ -162,64 +189,17 @@ namespace AdvancedRoadAnarchy
                     case RulesList.CanCreateSegment:
                         add.From = typeof(NetTool).GetMethods(allFlags).Single((MethodInfo c) => c.Name == "CanCreateSegment" && c.GetParameters().Length == 12);
                         break;
+                    case RulesList.CreateNode:
+                        add.From = typeof(NetTool).GetMethods(allFlags).Single((MethodInfo c) => c.Name == "CreateNode" && c.GetParameters().Length == 17);
+                        add.LockState = true;
+                        break;
                 }
                 add.To = typeof(AdvancedRoadAnarchyTools).GetMethod(rule.ToString(), allFlags);
-                AdvancedRoadAnarchy.Settings.rules.Add(rule, add);
+                rules.Add(rule, add);
             }
-            if (AdvancedRoadAnarchy.Settings.ElevationLimits)
-            {
-                Redirection value;
-                AdvancedRoadAnarchy.Settings.rules.TryGetValue(RulesList.GetElevationLimits, out value);
-                value.Lock = true;
-                AdvancedRoadAnarchy.Settings.rules[RulesList.GetElevationLimits] = value;
-            }
-            else
-                AdvancedRoadAnarchy.Settings.m_ElevationLimits = false;
-            if (AdvancedRoadAnarchy.Settings.CheckNodeHeights)
-            {
-                Redirection value;
-                AdvancedRoadAnarchy.Settings.rules.TryGetValue(RulesList.CheckNodeHeights, out value);
-                value.Lock = true;
-                AdvancedRoadAnarchy.Settings.rules[RulesList.CheckNodeHeights] = value;
-            }
-            else
-                AdvancedRoadAnarchy.Settings.CheckNodeHeights = false;
-            if (AdvancedRoadAnarchy.Settings.StartOnLoad)
-            {
-                AnarchyHook = AdvancedRoadAnarchy.Settings.StartOnLoad;
-                EnableHook();
-            }
+            Debug.Log("ARA initialized");
         }
 
-        public void UpdateHook()
-        {
-            if (AnarchyHook) { DisableHook(); }
-            else { EnableHook(); }
-            AnarchyHook = !AnarchyHook;
-        }
-        
-        public void EnableHook()
-        {
-            for (int i = 0; i < AdvancedRoadAnarchy.Settings.rules.Count; i++)
-            {
-                var rule = AdvancedRoadAnarchy.Settings.rules.ElementAt(i);
-                var value = rule.Value;
-                value.Status = true;
-                AdvancedRoadAnarchy.Settings.rules[rule.Key] = value;
-            }
-        }
-
-        public void DisableHook()
-        {
-            for (int i = 0; i < AdvancedRoadAnarchy.Settings.rules.Count; i++)
-            {
-                var rule = AdvancedRoadAnarchy.Settings.rules.ElementAt(i);
-                var value = rule.Value;
-                value.Status = false;
-                AdvancedRoadAnarchy.Settings.rules[rule.Key] = value;
-            }
-        }
-        
         public static bool CheckCollidingBuildings(ulong[] buildingMask, ulong[] segmentMask)
         {
             return false;
@@ -229,12 +209,12 @@ namespace AdvancedRoadAnarchy
         {
             return ToolBase.ToolErrors.None;
         }
-                
+
         public void GetElevationLimits(out int min, out int max)
         {
             float step = 12f;
             min = Mathf.RoundToInt(-120 / step);
-            max = Mathf.RoundToInt(255 / step);
+            max = Mathf.RoundToInt(256 / step);
         }
 
         private static ToolBase.ToolErrors TestNodeBuilding(BuildingInfo info, Vector3 position, Vector3 direction, ushort ignoreNode, ushort ignoreSegment, ushort ignoreBuilding, bool test, ulong[] collidingSegmentBuffer, ulong[] collidingBuildingBuffer)
@@ -262,7 +242,7 @@ namespace AdvancedRoadAnarchy
             float maxY = position.y + info.m_generatedInfo.m_size.y;
             Singleton<NetManager>.instance.OverlapQuad(quad, minY, maxY, collisionType, info.m_class.m_layer, ignoreNode, 0, ignoreSegment, collidingSegmentBuffer);
             Singleton<BuildingManager>.instance.OverlapQuad(quad, minY, maxY, collisionType, info.m_class.m_layer, ignoreBuilding, ignoreNode, 0, collidingBuildingBuffer);
-            
+
             if (!Singleton<BuildingManager>.instance.CheckLimits())
             {
                 toolErrors |= ToolBase.ToolErrors.TooManyObjects;
@@ -283,6 +263,31 @@ namespace AdvancedRoadAnarchy
         public static bool CheckCollidingSegments(ulong[] segmentMask, ulong[] buildingMask, ushort upgrading)
         {
             return false;
+        }
+
+        public static ToolBase.ToolErrors CreateNode(NetInfo info, NetTool.ControlPoint startPoint, NetTool.ControlPoint middlePoint, NetTool.ControlPoint endPoint, FastList<NetTool.NodePosition> nodeBuffer, int maxSegments, bool test, bool visualize, bool autoFix, bool needMoney, bool invert, bool switchDir, ushort relocateBuildingID, out ushort node, out ushort segment, out int cost, out int productionRate)
+        {
+            ToolBase.ToolErrors toolErrors = ToolBase.ToolErrors.None;
+            toolErrors = NetTool.CreateNode(info, startPoint, middlePoint, endPoint, nodeBuffer, maxSegments, test, test, visualize, autoFix, needMoney, invert, switchDir, relocateBuildingID, out ushort num, out ushort num2, out segment, out cost, out productionRate);
+            if (toolErrors == ToolBase.ToolErrors.None)
+            {
+                if (num2 != 0)
+                {
+                    node = num2;
+                }
+                else
+                {
+                    node = num;
+                }
+            }
+            else
+            {
+                if (toolErrors.IsFlagSet(ToolBase.ToolErrors.OutOfArea))
+                    toolErrors = toolErrors.ClearFlags(ToolBase.ToolErrors.OutOfArea);
+                Debug.Log("out of area: " + (int)ToolBase.ToolErrors.OutOfArea + " objetc collision: " + (int)ToolBase.ToolErrors.ObjectCollision + " toolerror: " + (int)toolErrors);
+                node = 0;
+            }
+            return toolErrors;
         }
     }
 }

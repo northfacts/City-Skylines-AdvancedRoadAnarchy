@@ -2,12 +2,15 @@
 using UnityEngine;
 using System.Linq;
 
+using System.Collections.Generic;
+
+
 namespace AdvancedRoadAnarchy
 {
     public class AdvancedRoadAnarchyButton : UIButton
     {
         AdvancedRoadAnarchyTools tools = new AdvancedRoadAnarchyTools();
-        
+
         public static UITextureAtlas ButtonAtlas = null;
         static readonly string ARA = "AdvancedRoadAnarchy";
 
@@ -28,7 +31,7 @@ namespace AdvancedRoadAnarchy
             this.absolutePosition = AdvancedRoadAnarchy.Settings.Resolutions.ButtonPosition;
             this.disabledBgSprite = null;
             this.disabledFgSprite = null;
-            
+
             this.focusedFgSprite = null;
             if (ButtonAtlas == null)
             {
@@ -116,14 +119,12 @@ namespace AdvancedRoadAnarchy
 
         public override void Update()
         {
-            if (AdvancedRoadAnarchy.Settings.rules.Count == 0)
-                tools.Initialize();
             if (this.containsMouse && Input.GetMouseButtonDown(0) && !AdvancedRoadAnarchy.Settings.UnlockButton)
-                tools.UpdateHook();
+                AdvancedRoadAnarchyTools.AnarchyHook = !AdvancedRoadAnarchyTools.AnarchyHook;
             if ((Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt)) && Input.GetKeyDown(KeyCode.L) && !AdvancedRoadAnarchy.Settings.UnlockButton)
             {
                 PlayClickSound(this);
-                tools.UpdateHook();
+                AdvancedRoadAnarchyTools.AnarchyHook = !AdvancedRoadAnarchyTools.AnarchyHook;
             }
             if ((Input.GetMouseButtonDown(1) || Input.GetMouseButtonDown(2)) && this.containsMouse)
             {
@@ -137,28 +138,19 @@ namespace AdvancedRoadAnarchy
                 }
             }
             if (AdvancedRoadAnarchy.Settings.InfoText && (AdvancedRoadAnarchy.Settings.UnlockButton || AdvancedRoadAnarchyTools.AnarchyHook))
-                 AdvancedRoadAnarchy.Settings.infotext.Show();
+                AdvancedRoadAnarchy.Settings.infotext.Show();
             else if (AdvancedRoadAnarchy.Settings.infotext.isVisible)
                 AdvancedRoadAnarchy.Settings.infotext.Hide();
             if (AdvancedRoadAnarchy.Settings.ScreenSize != AdvancedRoadAnarchy.Settings.Resolutions.size)
                 AdvancedRoadAnarchy.Settings.OnResolutionChanged();
-            if (AdvancedRoadAnarchy.Settings.ElevationLimits != AdvancedRoadAnarchy.Settings.m_ElevationLimits)
-            {
-                AdvancedRoadAnarchyTools.Redirection rule;
-                AdvancedRoadAnarchy.Settings.rules.TryGetValue(AdvancedRoadAnarchyTools.RulesList.GetElevationLimits, out rule);
-                rule.Lock = AdvancedRoadAnarchy.Settings.ElevationLimits;
-                AdvancedRoadAnarchy.Settings.rules[AdvancedRoadAnarchyTools.RulesList.GetElevationLimits] = rule;
-                AdvancedRoadAnarchy.Settings.m_ElevationLimits = AdvancedRoadAnarchy.Settings.ElevationLimits;
-            }
-            if (AdvancedRoadAnarchy.Settings.CheckNodeHeights != AdvancedRoadAnarchy.Settings.m_ChechNodeHeights)
-            {
-                AdvancedRoadAnarchyTools.Redirection rule;
-                AdvancedRoadAnarchy.Settings.rules.TryGetValue(AdvancedRoadAnarchyTools.RulesList.CheckNodeHeights, out rule);
-                rule.Lock = AdvancedRoadAnarchy.Settings.CheckNodeHeights;
-                AdvancedRoadAnarchy.Settings.rules[AdvancedRoadAnarchyTools.RulesList.CheckNodeHeights] = rule;
-                AdvancedRoadAnarchy.Settings.m_ChechNodeHeights = AdvancedRoadAnarchy.Settings.CheckNodeHeights;
-            }
+            if (AdvancedRoadAnarchyTools.FindFRTCheckbox)
+                AdvancedRoadAnarchyTools.CheckFineRoadTool();
             UpdateButton();
+            AdvancedRoadAnarchyTools.Redirection r;
+            AdvancedRoadAnarchyTools.rules.TryGetValue(AdvancedRoadAnarchyTools.RulesList.CheckNodeHeights, out r);
+            var log = " CheckNodeHeight: Status= " + r.Status + " Lock= ";
+            AdvancedRoadAnarchyTools.rules.TryGetValue(AdvancedRoadAnarchyTools.RulesList.CheckNodeHeights, out r);
+            Debug.Log("hook= " + AdvancedRoadAnarchyTools.AnarchyHook + log + r.Lock);
         }
 
         public static UITextureAtlas CreateAtlas(string name, int width, int height, string file, string[] spriteNames)
@@ -203,16 +195,16 @@ namespace AdvancedRoadAnarchy
         public override void OnDestroy()
         {
             base.OnDestroy();
-            for (int i = 0; i < AdvancedRoadAnarchy.Settings.rules.Count; i++)
+            for (int i = 0; i < AdvancedRoadAnarchyTools.rules.Count; i++)
             {
-                var rule = AdvancedRoadAnarchy.Settings.rules.ElementAt(i);
+                var rule = AdvancedRoadAnarchyTools.rules.ElementAt(i);
                 var value = rule.Value;
                 value.superLock = false;
                 value.Lock = false;
                 value.Status = false;
-                AdvancedRoadAnarchy.Settings.rules[rule.Key] = value;
+                AdvancedRoadAnarchyTools.rules[rule.Key] = value;
             }
-            AdvancedRoadAnarchy.Settings.rules.Clear();
+            AdvancedRoadAnarchyTools.rules.Clear();
             if (AdvancedRoadAnarchy.Settings.optionbox != null)
                 GameObject.Destroy(AdvancedRoadAnarchy.Settings.optionbox.gameObject);
             if (AdvancedRoadAnarchy.Settings.infotext != null)

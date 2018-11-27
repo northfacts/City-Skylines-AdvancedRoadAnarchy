@@ -56,6 +56,12 @@ namespace AdvancedRoadAnarchy
 
     public class AdvancedRoadAnarchySettings
     {
+        private bool m_UnlockButton = false;
+        private bool m_StartOnLoad = false;
+        private bool m_InfoText = true;
+        private bool m_ElevationLimits = true;
+        private bool m_CheckNodeHeights = false;
+        private bool m_CreateNode = false;
         [XmlIgnore]
         public UIComponent button;
         [XmlIgnore]
@@ -65,17 +71,64 @@ namespace AdvancedRoadAnarchy
         
         public List<AdvancedRoadAnarchyResolution> ResolutionsList = new List<AdvancedRoadAnarchyResolution>();
 
-        public bool StartOnLoad = false;
-        public bool InfoText = true;
         [XmlIgnore]
-        public bool UnlockButton = false;
-        [XmlIgnore]
-        public bool m_ElevationLimits = true;
-        public bool ElevationLimits;
-        [XmlIgnore]
-        public bool m_ChechNodeHeights = false;
-        public bool CheckNodeHeights;
-        
+        public bool UnlockButton
+        {
+            get { return m_UnlockButton; }
+            set { m_UnlockButton = value; }
+        }
+
+        public bool StartOnLoad
+        {
+            get { return m_StartOnLoad; }
+            set { m_StartOnLoad = value; }
+        }
+
+        public bool InfoText
+        {
+            get { return m_InfoText; }
+            set { m_InfoText = value; }
+        }
+
+        public bool ElevationLimits
+        {
+            get { return m_ElevationLimits; }
+            set
+            {
+                AdvancedRoadAnarchyTools.Redirection rule;
+                AdvancedRoadAnarchyTools.rules.TryGetValue(AdvancedRoadAnarchyTools.RulesList.GetElevationLimits, out rule);
+                rule.Lock = value;
+                AdvancedRoadAnarchyTools.rules[AdvancedRoadAnarchyTools.RulesList.GetElevationLimits] = rule;
+                m_ElevationLimits = value;
+            }
+        }
+
+        public bool CheckNodeHeights
+        {
+            get { return m_CheckNodeHeights; }
+            set
+            {
+                AdvancedRoadAnarchyTools.Redirection rule;
+                AdvancedRoadAnarchyTools.rules.TryGetValue(AdvancedRoadAnarchyTools.RulesList.CheckNodeHeights, out rule);
+                rule.Lock = value;
+                AdvancedRoadAnarchyTools.rules[AdvancedRoadAnarchyTools.RulesList.CheckNodeHeights] = rule;
+                m_CheckNodeHeights = value;
+            }
+        }
+
+        public bool CreateNode
+        {
+            get { return m_CreateNode; }
+            set
+            {
+                AdvancedRoadAnarchyTools.Redirection rule;
+                AdvancedRoadAnarchyTools.rules.TryGetValue(AdvancedRoadAnarchyTools.RulesList.CreateNode, out rule);
+                rule.Lock = value;
+                AdvancedRoadAnarchyTools.rules[AdvancedRoadAnarchyTools.RulesList.CreateNode] = rule;
+                m_CreateNode = value;
+            }
+        }
+
         [XmlIgnore]
         public AdvancedRoadAnarchyResolution Resolutions = new AdvancedRoadAnarchyResolution();
 
@@ -153,8 +206,5 @@ namespace AdvancedRoadAnarchy
                 return value;
             }
         }
-
-        [XmlIgnore]
-        public Dictionary<AdvancedRoadAnarchyTools.RulesList, AdvancedRoadAnarchyTools.Redirection> rules = new Dictionary<AdvancedRoadAnarchyTools.RulesList, AdvancedRoadAnarchyTools.Redirection>();
     }
 }
