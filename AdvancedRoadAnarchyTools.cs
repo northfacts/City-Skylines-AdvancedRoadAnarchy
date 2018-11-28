@@ -20,7 +20,8 @@ namespace AdvancedRoadAnarchy
             CheckCollidingBuildings,
             CheckSpace,
             GetElevationLimits,
-            CreateNode
+            CreateNode,
+            MetroElevationLimits
         }
 
         public static bool FindFRTCheckbox = false;
@@ -193,6 +194,10 @@ namespace AdvancedRoadAnarchy
                         add.From = typeof(NetTool).GetMethods(allFlags).Single((MethodInfo c) => c.Name == "CreateNode" && c.GetParameters().Length == 17);
                         add.LockState = true;
                         break;
+                    case RulesList.MetroElevationLimits:
+                        add.From = typeof(MetroTrackAI).GetMethod("GetElevationLimits", allFlags);
+                        add.LockState = true;
+                        break;
                 }
                 add.To = typeof(AdvancedRoadAnarchyTools).GetMethod(rule.ToString(), allFlags);
                 rules.Add(rule, add);
@@ -215,6 +220,12 @@ namespace AdvancedRoadAnarchy
             float step = 12f;
             min = Mathf.RoundToInt(-120 / step);
             max = Mathf.RoundToInt(256 / step);
+        }
+
+        public void MetroElevationLimits(out int min, out int max)
+        {
+            min = -10;
+            max = 0;
         }
 
         private static ToolBase.ToolErrors TestNodeBuilding(BuildingInfo info, Vector3 position, Vector3 direction, ushort ignoreNode, ushort ignoreSegment, ushort ignoreBuilding, bool test, ulong[] collidingSegmentBuffer, ulong[] collidingBuildingBuffer)
@@ -284,7 +295,6 @@ namespace AdvancedRoadAnarchy
             {
                 if (toolErrors.IsFlagSet(ToolBase.ToolErrors.OutOfArea))
                     toolErrors = toolErrors.ClearFlags(ToolBase.ToolErrors.OutOfArea);
-                Debug.Log("out of area: " + (int)ToolBase.ToolErrors.OutOfArea + " objetc collision: " + (int)ToolBase.ToolErrors.ObjectCollision + " toolerror: " + (int)toolErrors);
                 node = 0;
             }
             return toolErrors;

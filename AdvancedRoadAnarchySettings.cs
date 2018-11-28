@@ -99,6 +99,9 @@ namespace AdvancedRoadAnarchy
                 AdvancedRoadAnarchyTools.rules.TryGetValue(AdvancedRoadAnarchyTools.RulesList.GetElevationLimits, out rule);
                 rule.Lock = value;
                 AdvancedRoadAnarchyTools.rules[AdvancedRoadAnarchyTools.RulesList.GetElevationLimits] = rule;
+                AdvancedRoadAnarchyTools.rules.TryGetValue(AdvancedRoadAnarchyTools.RulesList.MetroElevationLimits, out rule);
+                rule.Lock = value;
+                AdvancedRoadAnarchyTools.rules[AdvancedRoadAnarchyTools.RulesList.MetroElevationLimits] = rule;
                 m_ElevationLimits = value;
             }
         }

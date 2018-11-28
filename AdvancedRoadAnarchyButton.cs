@@ -146,11 +146,11 @@ namespace AdvancedRoadAnarchy
             if (AdvancedRoadAnarchyTools.FindFRTCheckbox)
                 AdvancedRoadAnarchyTools.CheckFineRoadTool();
             UpdateButton();
-            AdvancedRoadAnarchyTools.Redirection r;
-            AdvancedRoadAnarchyTools.rules.TryGetValue(AdvancedRoadAnarchyTools.RulesList.CheckNodeHeights, out r);
-            var log = " CheckNodeHeight: Status= " + r.Status + " Lock= ";
-            AdvancedRoadAnarchyTools.rules.TryGetValue(AdvancedRoadAnarchyTools.RulesList.CheckNodeHeights, out r);
-            Debug.Log("hook= " + AdvancedRoadAnarchyTools.AnarchyHook + log + r.Lock);
+            //AdvancedRoadAnarchyTools.Redirection r;
+            //AdvancedRoadAnarchyTools.rules.TryGetValue(AdvancedRoadAnarchyTools.RulesList.CheckNodeHeights, out r);
+            //var log = " CheckNodeHeight: Status= " + r.Status + " Lock= ";
+            //AdvancedRoadAnarchyTools.rules.TryGetValue(AdvancedRoadAnarchyTools.RulesList.CheckNodeHeights, out r);
+            //Debug.Log("hook= " + AdvancedRoadAnarchyTools.AnarchyHook + log + r.Lock);
         }
 
         public static UITextureAtlas CreateAtlas(string name, int width, int height, string file, string[] spriteNames)
